@@ -41,16 +41,16 @@ A live demo is available at:
 
 ## Credits & License
 
-This project draws on ideas and code from [j-hc/revanced-magisk-module](https://github.com/j-hc/revanced-magisk-module), which is licensed under the GNU General Public License v3.0.
+This project is based on the Magisk module structure and installation approach originally introduced in [j-hc/revanced-magisk-module](https://github.com/j-hc/revanced-magisk-module), which is licensed under the GNU General Public License v3.0.
 
-**Changes made:**
-- Generalized the module structure to accept any APK, not just ReVanced builds.
+**Modifications made:**
+- Generalized the module to accept any APK, not just ReVanced builds.
 - Added a web interface for APK selection, metadata parsing, and customization.
 - Removed ReVanced‑specific patching and update logic.
 - Included the original `bin` folder (advanced binaries) as an optional component.
-- Replaced the native Android installer with a browser‑based ZIP generator.
+- Replaced the on‑device installer with a browser‑based ZIP generator.
 
-This project is also licensed under the **GPL‑3.0**. The complete source code is available in this repository, and the full license text is provided in the [LICENSE](LICENSE) file.
+This project is also licensed under the **GPL‑3.0**. The complete source is available in this repository, and the full license text is provided in the [LICENSE](LICENSE) file.
 
 ## Related Tools
 

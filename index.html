@@ -1,3 +1,13 @@
+<!--
+PM Moduler Pro
+Copyright (C) 2025 anemia004
+Derived from j-hc/revanced-magisk-module (GPL-3.0)
+This program is free software: you can redistribute it and/or modify
+under the terms of the GNU General Public License as published by
+the Free Software Foundation, either version 3 of the License, or
+(at your option) any later version.
+Full license: https://www.gnu.org/licenses/gpl-3.0.txt
+-->
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -703,7 +713,31 @@
                 addText(meta + 'update-binary', `#!/sbin/sh\numask 022\nui_print() { echo "$1"; }\nrequire_new_magisk() {\n  ui_print "*******************************"\n  ui_print " Please install Magisk v20.4+! "\n  ui_print "*******************************"\n  exit 1\n}\nOUTFD=$2\nZIPFILE=$3\nmount /data 2>/dev/null\n[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk\n. /data/adb/magisk/util_functions.sh\n[ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk\ninstall_module\nexit 0`);
                 addText(meta + 'updater-script', '#MAGISK');
                 addText('module.prop', `id=${id}\nname=${name}\nversion=${version}\nversionCode=${versionCode}\nauthor=${author}\ndescription=Magisk module with APK (PM install)`);
-                addText('customize.sh', `#!/system/bin/sh\nMODPATH=\${MODPATH:-/data/adb/modules/${id}}\nAPK_FILE="$MODPATH/base.apk"\nui_print() { echo "$1"; }\npmex() { if command -v pm >/dev/null 2>&1; then pm "$@"; else cmd package "$@"; fi; }\nui_print "Installing APK..."\npmex install -r "$APK_FILE"\nif [ $? -eq 0 ]; then\n  ui_print "Success."\nelse\n  ui_print "Trying session install..."\n  SZ=$(wc -c < "$APK_FILE")\n  SES=$(pmex install-create --user 0 -i com.android.vending -r -S "$SZ" 2>&1 | grep -o '[0-9]*$')\n  if [ -n "$SES" ]; then\n    cat "$APK_FILE" | pmex install-write "$SES" base.apk\n    pmex install-commit "$SES"\n    [ $? -eq 0 ] && ui_print "Session install succeeded." || ui_print "Session install failed."\n  else\n    ui_print "Could not create session."\n  fi\nfi\nrm -f "$APK_FILE"\nui_print "Done."`);
+                addText('customize.sh', `#!/system/bin/sh
+# PM Moduler Pro – customize.sh
+# Derived from j-hc/revanced-magisk-module (GPL-3.0)
+MODPATH=\${MODPATH:-/data/adb/modules/${id}}
+APK_FILE="$MODPATH/base.apk"
+ui_print() { echo "$1"; }
+pmex() { if command -v pm >/dev/null 2>&1; then pm "$@"; else cmd package "$@"; fi; }
+ui_print "Installing APK..."
+pmex install -r "$APK_FILE"
+if [ $? -eq 0 ]; then
+  ui_print "Success."
+else
+  ui_print "Trying session install..."
+  SZ=$(wc -c < "$APK_FILE")
+  SES=$(pmex install-create --user 0 -i com.android.vending -r -S "$SZ" 2>&1 | grep -o '[0-9]*$')
+  if [ -n "$SES" ]; then
+    cat "$APK_FILE" | pmex install-write "$SES" base.apk
+    pmex install-commit "$SES"
+    [ $? -eq 0 ] && ui_print "Session install succeeded." || ui_print "Session install failed."
+  else
+    ui_print "Could not create session."
+  fi
+fi
+rm -f "$APK_FILE"
+ui_print "Done."`);
                 addText('uninstall.sh', `#!/system/bin/sh\nui_print "Module removed. APK may remain installed."`);
                 addText('service.sh', `#!/system/bin/sh\nexit 0`);
                 files['base.apk'] = apkData;

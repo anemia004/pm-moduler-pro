@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PM Moduler Pro</title>
+    <!-- Local libraries (must be in same folder) -->
+    <script src="fflate.min.js"></script>
+    <script src="app-info-parser.min.js"></script>
+    
+    <!-- Local GSAP Libraries -->
+    <script src="gsap.min.js"></script>
+    <script src="Draggable.min.js"></script>
+
+    <style>
+        * { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Segoe UI', system-ui, sans-serif;
+            background:#000;
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            min-height:100vh;
+            overflow:hidden;
+        }
+        #matrixCanvas {
+            position:fixed;
+            top:0; left:0;
+            width:100vw; height:100vh;
+            z-index:0;
+            background:#000;
+        }
+
+        /* ===== ENHANCED GLASS WRAPPER ===== */
+        .glass-wrapper {
+            position:relative;
+            z-index:10;
+            width:min(100%, 650px);
+            max-height:92vh;
+            overflow-y:auto;
+            border-radius: 2rem;
+            
+            background: linear-gradient(135deg, rgba(10, 25, 45, 0.25) 0%, rgba(0, 5, 15, 0.4) 100%);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            
+            border-top: 1px solid rgba(255, 255, 255, 0.3);
+            border-left: 1px solid rgba(255, 255, 255, 0.15);
+            border-right: 1px solid rgba(0, 191, 255, 0.1);
+            border-bottom: 1px solid rgba(0, 191, 255, 0.2);
+            
+            box-shadow:
+                0 20px 50px rgba(0,0,0,0.7),
+                0 0 60px rgba(0,191,255,0.15),
+                inset 0 0 30px rgba(255,255,255,0.02);
+            
+            padding: 2.5rem;
+            scrollbar-width: thin;
+            scrollbar-color: rgba(0,191,255,0.4) transparent;
+        }
+        
+        .glass-wrapper::-webkit-scrollbar { width:6px; }
+        .glass-wrapper::-webkit-scrollbar-track { background:transparent; }
+        .glass-wrapper::-webkit-scrollbar-thumb { background:rgba(0,191,255,0.4); border-radius:10px; }
+
+        .form-container { display:flex; flex-direction:column; gap:1.4rem; color:#fff; position:relative; z-index:1; }
+        
+        h2 {
+            text-align:center;
+            font-size:2.2rem;
+            color:#fff;
+            text-shadow: 0 0 10px rgba(0,191,255,0.8), 0 0 20px rgba(0,191,255,0.4);
+            margin-bottom:0.5rem;
+            letter-spacing:0.05em;
+            font-weight:800;
+        }
+
+        .field label.title {
+            display:block;
+            font-size:0.8rem;
+            text-transform:uppercase;
+            letter-spacing:0.15em;
+            color:rgba(255, 255, 255, 0.8);
+            margin-bottom:0.4rem;
+            font-weight:600;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.7);
+        }
+
+        input[type="text"] {
+            width:100%;
+            padding:0.9rem 1.2rem;
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(5px);
+            -webkit-backdrop-filter: blur(5px);
+            
+            border: 1px solid rgba(255, 255, 255, 0.15);
+            border-bottom: 2px solid rgba(0, 191, 255, 0.4);
+            border-radius: 1rem;
+            
+            color:#fff;
+            font-size:1.05rem;
+            outline:none;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.3);
+        }
+        
+        input[type="text"]::placeholder {
+            color: rgba(255, 255, 255, 0.4);
+        }
+
+        input[type="text"]:focus {
+            background: rgba(0, 191, 255, 0.08);
+            border-color: rgba(255, 255, 255, 0.3);
+            border-bottom: 2px solid #00bfff;
+            box-shadow: 
+                inset 0 2px 5px rgba(0,0,0,0.3), 
+                0 10px 20px -10px rgba(0,191,255,0.5);
+            transform: translateY(-2px);
+        }
+
+        .file-label {
+            display:flex;
+            justify-content: center;
+            align-items: center;
+            cursor:pointer;
+            padding:1rem;
+            
+            background: rgba(0, 191, 255, 0.05);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            
+            border: 1px dashed rgba(0, 191, 255, 0.5);
+            border-radius: 1rem;
+            text-align:center;
+            transition: all 0.3s ease;
+            font-weight:500;
+            color: rgba(255, 255, 255, 0.9);
+        }
+        .file-label:hover {
+            background: rgba(0, 191, 255, 0.15);
+            border-color: #00bfff;
+            box-shadow: 0 0 20px rgba(0,191,255,0.3), inset 0 0 10px rgba(255,255,255,0.1);
+            transform: scale(1.01);
+        }
+        .file-name {
+            font-size:0.8rem;
+            color:rgba(255,255,255,0.6);
+            margin-top:0.4rem;
+            font-style:italic;
+            text-align: right;
+            padding-right: 0.5rem;
+        }
+
+        .toggle-wrapper {
+            display:flex;
+            align-items:center;
+            gap:1rem;
+            margin:0.5rem 0;
+            padding: 0.5rem;
+            border-radius: 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .toggle-label {
+            font-size:0.9rem;
+            font-weight: 600;
+            text-transform:uppercase;
+            color:#00bfff;
+            letter-spacing:0.05em;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.6);
+        }
+
+        .glass-checkbox-wrapper {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            cursor: pointer;
+            margin: 0.5rem 0;
+            user-select: none;
+        }
+        .glass-checkbox-wrapper input {
+            display: none;
+        }
+        .glass-checkbox {
+            width: 24px;
+            height: 24px;
+            border-radius: 6px;
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            backdrop-filter: blur(5px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            transition: all 0.3s ease;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.4);
+        }
+        .glass-checkbox-wrapper:hover .glass-checkbox {
+            border-color: rgba(0, 191, 255, 0.6);
+            background: rgba(255, 255, 255, 0.15);
+        }
+        .glass-checkbox-wrapper input:checked + .glass-checkbox {
+            background: rgba(0, 191, 255, 0.4);
+            border-color: #00bfff;
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.5), inset 0 1px 2px rgba(255,255,255,0.5);
+        }
+        .glass-checkbox-wrapper input:checked + .glass-checkbox::after {
+            content: "✓";
+            color: #fff;
+            font-size: 16px;
+            font-weight: bold;
+            text-shadow: 0 0 5px rgba(255,255,255,0.9);
+        }
+        .glass-checkbox-label {
+            font-size: 0.9rem;
+            color: rgba(255, 255, 255, 0.9);
+            text-shadow: 0 1px 3px rgba(0,0,0,0.5);
+        }
+
+        .status {
+            padding:1rem;
+            border-radius:1rem;
+            background: rgba(0, 0, 0, 0.4);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            color:#fff;
+            font-size:0.95rem;
+            text-align:center;
+            font-weight: 500;
+            border: 1px solid rgba(255,255,255,0.08);
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.6);
+            transition: all 0.3s ease;
+        }
+        .status.success {
+            background: rgba(0, 255, 136, 0.15);
+            border-top: 1px solid rgba(0, 255, 136, 0.5);
+            border-bottom: 1px solid rgba(0, 255, 136, 0.15);
+            color:#00ff88;
+            box-shadow: 0 5px 15px rgba(0, 255, 136, 0.15), inset 0 2px 10px rgba(0,0,0,0.6);
+            text-shadow: 0 0 8px rgba(0, 255, 136, 0.5);
+        }
+        .status.error {
+            background: rgba(255, 85, 85, 0.15);
+            border-top: 1px solid rgba(255, 85, 85, 0.5);
+            border-bottom: 1px solid rgba(255, 85, 85, 0.15);
+            color:#ff5555;
+            box-shadow: 0 5px 15px rgba(255, 85, 85, 0.15), inset 0 2px 10px rgba(0,0,0,0.6);
+            text-shadow: 0 0 8px rgba(255, 85, 85, 0.5);
+        }
+
+        .btn {
+            padding:1.2rem;
+            margin-top: 0.5rem;
+            background: linear-gradient(145deg, #00bfff, #0088cc);
+            color:#000;
+            border: none;
+            border-radius:2rem;
+            font-size:1.2rem;
+            font-weight:700;
+            cursor:pointer;
+            text-transform:uppercase;
+            letter-spacing:0.15em;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.3), 0 0 20px rgba(0,191,255,0.5);
+        }
+        .btn:hover {
+            transform: translateY(-2px);
+            background: linear-gradient(145deg, #33ccff, #0099dd);
+            box-shadow: 0 15px 25px rgba(0,0,0,0.4), 0 0 30px rgba(0,191,255,0.8);
+        }
+        .btn:active {
+            transform: translateY(1px);
+            box-shadow: 0 5px 10px rgba(0,0,0,0.4), inset 0 3px 10px rgba(0,0,0,0.3);
+        }
+        .btn:disabled {
+            background: #666;
+            color: rgba(255,255,255,0.6);
+            cursor:not-allowed;
+            box-shadow:none;
+            text-shadow: none;
+            transform: none;
+        }
+
+        /* ===== LIQUID TOGGLE CSS (unchanged) ===== */
+        :root { --transition: 0.2s; --ease: ease-out; }
+        [data-pressed=true] .liquid__track { min-height: 30px; }
+        [data-bounce='true']:has(:is(button:active, [data-pressed="true"])) { --transition: 0.6s; --ease: linear(0 0%, 0.6091 3.69%, 1.0259 7.24%, 1.1733 9.05%, 1.283 10.92%, 1.3562 12.87%, 1.3948 14.95%, 1.4014 16.03%, 1.3999 17.16%, 1.3731 19.64%, 1.3202 22.27%, 1.1394 29.39%, 1.0582 33.17%, 0.9943 37.45%, 0.9734 39.64%, 0.9593 41.92%, 0.9505 45.08%, 0.9517 48.7%, 0.9924 63.02%, 1.0046 71.2%, 1.0061 78.24%, 1 100%); }
+        .indicator--masked .mask { translate: calc((var(--complete) / 100) * (100cqi - 60cqi - (0 * var(--border)))) -50%; transition-property: height, width, margin, scale; transition-duration: var(--transition); transition-timing-function: var(--ease); will-change: height, width, margin; }
+        .wrapper { clip-path: inset(0 0 0 0 round 100px); filter: blur(6px); transition: filter var(--transition) var(--ease); }
+        [aria-pressed='true']:not([data-active='true']) .liquid__track { left: calc(var(--border) * 6); }
+        .liquid__track { left: 0; transition-property: height, width, filter, left; transition-duration: var(--transition); transition-timing-function: var(--ease); translate: calc((var(--complete) / 100) * (100cqi - 100% - (6 * var(--border)))) -50%; }
+        [data-mapped=false] .liquid__track { transition-property: height, width, filter, left, background; transition-duration: var(--transition), var(--transition), var(--transition), var(--transition), calc(var(--transition) * 0.5); transition-timing-function: var(--ease), var(--ease), var(--ease), var(--ease), ease-out; }
+        .indicator__liquid { translate: calc((var(--complete) / 100) * (100cqi - 100% - (2 * var(--border)))) -50%; transition-property: scale; transition-duration: var(--transition); transition-timing-function: var(--ease); }
+        .indicator__liquid :is(.cover, .shadow) { transition: opacity var(--transition) var(--ease); }
+        [data-active='true'] .indicator--masked .mask, .liquid-toggle:active .indicator--masked .mask { height: calc((100% - (2 * var(--border))) * (1.65 - (var(--delta, 0) * 0.025))); width: calc((60% - (2 * var(--border))) * (1.65 + (var(--delta, 0) * 0.025))); margin-left: calc((60% - (2 * var(--border))) * ((.65 + (var(--delta, 0) * 0.025)) * -0.5)); }
+        [data-active='true'] .indicator__liquid, .liquid-toggle:active .indicator__liquid { scale: calc(1.65 + (var(--delta, 0) * 0.025)) calc(1.65 - (var(--delta, 0) * 0.025)); }
+        [data-active='true'] .wrapper, .liquid-toggle:active .wrapper { filter: blur(0px); }
+        [data-active='true'] .indicator__liquid .shadow, .liquid-toggle:active .indicator__liquid .shadow { opacity: 1; }
+        [data-active='true'] .indicator__liquid .cover, .liquid-toggle:active .indicator__liquid .cover { opacity: 0; }
+        [data-active='true'] .indicator__liquid .liquid__track, .liquid-toggle:active .indicator__liquid .liquid__track { left: calc(var(--border) * 3); height: calc((var(--height) * 1px) - (6 * var(--border))); }
+        [data-mapped=false] .liquid-toggle { --progress: round(down, var(--complete), 85); --checked: hsl(var(--hue, 195), calc((8 + (var(--progress) / 85 * (92))) * 1%), calc((81 - (var(--progress) / 85 * (81 - 50))) * 1%)); }
+        [data-mapped=false] .liquid-toggle .indicator, [data-mapped=false] .liquid-toggle .indicator--masked { transition: background calc(var(--transition) * 0.5) ease-out; }
+        [data-mapped=false] .liquid-toggle .liquid__shadow { transition: box-shadow calc(var(--transition) * 0.5) ease-out; }
+        .liquid-toggle { --unchecked: hsl(218, 8%, 81%); --checked: hsl(var(--hue, 195), calc((8 + (var(--complete) / 100 * (92))) * 1%), calc((81 - (var(--complete) / 100 * (81 - 50))) * 1%)); --control: hsl(300, 100%, 100%); --border: 5px; --width: 140; --height: 60; height: calc(var(--height) * 1px); width: calc(var(--width) * 1px); border-radius: 100px; border: 0; padding: 0; cursor: pointer; position: relative; overflow: visible; container-type: inline-size; background: #0000; transition: outline var(--transition) var(--ease); outline-offset: 2px; transform-style: preserve-3d; }
+        .liquid-toggle * { pointer-events: none; }
+        .liquid-toggle:focus-visible { outline: 4px solid color-mix(in oklch, var(--checked), #0000); }
+        .liquid-toggle:active { outline: none; }
+        .liquid-toggle[data-active='true']:focus-visible { outline: 4px solid #0000; }
+        .indicator { border-radius: 100px; pointer-events: none; height: 100%; width: 100%; background: var(--checked); position: absolute; top: 50%; scale: 1; left: 50%; translate: -50% -50%; }
+        .knockout { height: calc(var(--height) * 1px); width: calc(var(--width) * 1px); border-radius: 100px; filter: url(#remove-black); position: absolute; inset: 0; will-change: filter, scale; transform: translate3d(0, 0, 0); }
+        .indicator--masked { background: var(--checked); z-index: 12; height: 100%; width: 100%; translate: -50% -50%; container-type: inline-size; }
+        .indicator--masked .mask { position: absolute; height: calc(100% - (2 * var(--border))); width: calc(60% - (2 * var(--border))); top: 50%; background: #000; left: var(--border); border-radius: 100px; }
+        .wrapper { position: absolute; inset: 0; border-radius: 100px; }
+        .liquids { position: absolute; inset: 0; transform: translate3d(0, 0, 0); border-radius: 100px; overflow: hidden; filter: url(#goo); }
+        .liquids .liquid__shadow { position: absolute; inset: 0; box-shadow: inset 0px 0px 3px 4px var(--checked), inset calc(((var(--complete) / 100) * 8px) + -4px) 0px 3px 4px var(--checked); border-radius: 100px; }
+        .liquids .liquid__track { content: ''; height: calc((var(--height) * 1px) - (0 * var(--border))); width: calc((var(--width) * 1px) - (0 * var(--border))); background: var(--checked); border-radius: 100px; position: absolute; top: 50%; }
+        .indicator__liquid { position: absolute; height: calc(100% - (2 * var(--border))); width: calc(60% - (2 * var(--border))); container-type: inline-size; top: 50%; background: #0000; left: var(--border); border-radius: 100px; }
+        .indicator__liquid .shadow { opacity: 0; content: ''; position: absolute; inset: 0; border-radius: 100px; box-shadow: 1px -1px 2px hsl(0 0% 100% / 0.5) inset, 0px -1px 2px hsl(0 0% 100% / 0.5) inset, -1px -1px 2px hsl(0 0% 100% / 0.5) inset, 1px 1px 2px hsl(0 0% 30% / 0.5) inset, -8px 4px 10px -6px hsl(0 0% 30% / 0.25) inset, -1px 1px 6px hsl(0 0% 30% / 0.25) inset, -1px -1px 8px hsl(0 0% 60% / 0.15), 1px 1px 2px hsl(0 0% 30% / 0.15), 2px 2px 6px hsl(0 0% 30% / 0.15), -2px -1px 2px hsl(0 0% 100% / 0.25) inset, 3px 6px 16px -6px hsl(0 0% 30% / 0.5); z-index: 20; }
+        .indicator__liquid .cover { content: ''; position: absolute; inset: 0; background: white; border-radius: 100px; }
+    </style>
+</head>
+<body>
+    <canvas id="matrixCanvas"></canvas>
+
+    <!-- Essential SVG Filters for Liquid Toggle -->
+    <svg class="sr-only" xmlns="http://www.w3.org/2000/svg">
+      <defs>
+        <filter id="goo">
+          <feGaussianBlur id="SvgjsFeGaussianBlur1000" result="SvgjsFeGaussianBlur1000" in="SourceGraphic" stdDeviation="2"></feGaussianBlur>
+          <feColorMatrix id="SvgjsFeColorMatrix1001" result="SvgjsFeColorMatrix1001" in="SvgjsFeGaussianBlur1000" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 0 0 0 16 -10" type="matrix"></feColorMatrix>
+          <feComposite id="SvgjsFeComposite1002" result="SvgjsFeComposite1002" in="SvgjsFeColorMatrix1001" operator="atop"></feComposite>
+        </filter>
+        <filter id="remove-black" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" values="1 0 0 0 0 0 1 0 0 0 0 0 1 0 0 -255 -255 -255 0 1" result="black-pixels"/>
+          <feMorphology in="black-pixels" operator="dilate" radius="0.5" result="smoothed"/>
+          <feComposite in="SourceGraphic" in2="smoothed" operator="out" />
+        </filter>
+      </defs>
+    </svg>
+
+    <div class="glass-wrapper">
+        <div class="form-container">
+            <h2>PM Moduler Pro</h2>
+
+            <!-- APK File -->
+            <div class="field">
+                <label class="title">APK File *</label>
+                <label class="file-label" for="apkFile">
+                    <span id="fileButtonText">📎 Click to Browse APK</span>
+                </label>
+                <input type="file" id="apkFile" accept=".apk" style="display:none;" />
+                <div class="file-name" id="fileName">No file selected</div>
+            </div>
+
+            <!-- Auto-fill with the NEW Liquid Toggle -->
+            <div class="toggle-wrapper">
+                <div style="position: relative; width: 60px; height: 30px; overflow: visible;">
+                    <div style="position: absolute; top: 0; left: 0; transform: scale(0.4285); transform-origin: top left;">
+                        <button aria-label="toggle" aria-pressed="true" class="liquid-toggle" id="liquidToggleBtn">
+                            <div class="knockout">
+                              <div class="indicator indicator--masked">
+                                <div class="mask"></div>
+                              </div>
+                            </div>
+                            <div class="indicator__liquid">
+                              <div class="shadow"></div>
+                              <div class="wrapper">
+                                <div class="liquids">
+                                  <div class="liquid__shadow"></div>
+                                  <div class="liquid__track"></div>
+                                </div>
+                              </div>
+                              <div class="cover"></div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <span class="toggle-label">Auto‑fill from APK</span>
+                <input type="checkbox" id="autoFill" checked style="display:none;" />
+            </div>
+
+            <!-- Module fields -->
+            <div class="field"><label class="title">Module ID *</label><input type="text" id="moduleId" placeholder="com.example.app" /></div>
+            <div class="field"><label class="title">App name</label><input type="text" id="moduleName" placeholder="App name" /></div>
+            
+            <div style="display: flex; gap: 1rem;">
+                <div class="field" style="flex:1;"><label class="title">Version</label><input type="text" id="moduleVersion" placeholder="1.0.0" /></div>
+                <div class="field" style="flex:1;"><label class="title">Version Code</label><input type="text" id="moduleVersionCode" placeholder="1" /></div>
+            </div>
+            
+            <div class="field"><label class="title">Author</label><input type="text" id="moduleAuthor" value="anemia004" /></div>
+
+            <!-- Advanced binaries with source selector -->
+            <div class="field">
+                <label class="glass-checkbox-wrapper">
+                    <input type="checkbox" id="includeBin" checked />
+                    <div class="glass-checkbox"></div>
+                    <span class="glass-checkbox-label">Include advanced binaries</span>
+                </label>
+                
+                <div id="binSourceContainer" style="margin-top:0.8rem; display:flex; gap:1.5rem; align-items:center; flex-wrap:wrap;">
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="radio" name="binSource" value="auto" checked />
+                        <span>Auto‑fetch from j‑hc repo</span>
+                    </label>
+                    <label style="display:flex; align-items:center; gap:0.5rem; cursor:pointer;">
+                        <input type="radio" name="binSource" value="manual" />
+                        <span>Manual upload</span>
+                    </label>
+                </div>
+                
+                <div id="manualBinContainer" style="display:none; margin-top:0.8rem;">
+                    <label class="title">bin.zip (select file)</label>
+                    <label class="file-label" for="binZipFile">
+                        <span id="binButtonText">📦 Click to Browse bin.zip</span>
+                    </label>
+                    <input type="file" id="binZipFile" accept=".zip" style="display:none;" />
+                    <div class="file-name" id="binFileName">No bin.zip selected</div>
+                </div>
+            </div>
+
+            <!-- Status -->
+            <div class="status" id="status">Ready to build</div>
+
+            <!-- Generate -->
+            <button class="btn" id="generateBtn">Generate Zip</button>
+        </div>
+    </div>
+
+    <script>
+        // ===== Matrix Rain =====
+        (function() {
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+            let width, height, drops;
+            const fontSize = 14;
+            const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$#%&*+=<>/\\|";
+            function init() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                drops = Array(Math.floor(width / fontSize)).fill(1);
+            }
+            function draw() {
+                ctx.fillStyle = 'rgba(0,0,0,0.05)';
+                ctx.fillRect(0,0,width,height);
+                ctx.fillStyle = '#00bfff';
+                ctx.font = fontSize + 'px monospace';
+                for (let i = 0; i < drops.length; i++) {
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                    if (drops[i] * fontSize > height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+            }
+            init();
+            setInterval(draw, 50);
+            window.addEventListener('resize', init);
+        })();
+
+        // ===== Liquid Toggle JS Initialization =====
+        (function() {
+            const toggleBtn = document.getElementById('liquidToggleBtn');
+            const hiddenCheckbox = document.getElementById('autoFill');
+            
+            document.documentElement.dataset.mapped = false;
+            document.documentElement.dataset.bounce = true;
+            const config = { bounce: true, bubble: true };
+            
+            gsap.set(toggleBtn, { '--complete': 100, '--hue': 195 });
+            
+            const toggleState = async () => {
+                toggleBtn.dataset.pressed = true;
+                if (config.bubble) toggleBtn.dataset.active = true;
+                
+                await Promise.allSettled(
+                    !config.bounce ? toggleBtn.getAnimations({ subtree: true }).map((a) => a.finished) : []
+                );
+                
+                const pressed = toggleBtn.matches('[aria-pressed=true]');
+                gsap.timeline({
+                    onComplete: () => {
+                        gsap.delayedCall(0.05, () => {
+                            toggleBtn.dataset.active = false;
+                            toggleBtn.dataset.pressed = false;
+                            const newState = !pressed;
+                            toggleBtn.setAttribute('aria-pressed', newState);
+                            hiddenCheckbox.checked = newState;
+                        });
+                    },
+                }).to(toggleBtn, {
+                    '--complete': pressed ? 0 : 100,
+                    duration: 0.12,
+                    delay: config.bounce && config.bubble ? 0.18 : 0,
+                });
+            };
+
+            const proxy = document.createElement('div');
+            Draggable.create(proxy, {
+                type: 'x',
+                allowContextMenu: true,
+                handle: toggleBtn,
+                onDragStart: function () {
+                    const toggleBounds = toggleBtn.getBoundingClientRect();
+                    const pressed = toggleBtn.matches('[aria-pressed=true]');
+                    const bounds = pressed
+                        ? toggleBounds.left - this.pointerX
+                        : toggleBounds.left + toggleBounds.width - this.pointerX;
+                    this.dragBounds = bounds;
+                    toggleBtn.dataset.active = true;
+                },
+                onDrag: function () {
+                    const pressed = toggleBtn.matches('[aria-pressed=true]');
+                    const dragged = this.x - this.startX;
+                    const complete = gsap.utils.clamp(
+                        0, 100,
+                        pressed ? gsap.utils.mapRange(this.dragBounds, 0, 0, 100, dragged)
+                                : gsap.utils.mapRange(0, this.dragBounds, 0, 100, dragged)
+                    );
+                    this.complete = complete;
+                    gsap.set(toggleBtn, { '--complete': complete, '--delta': Math.min(Math.abs(this.deltaX), 12) });
+                },
+                onDragEnd: function () {
+                    gsap.fromTo(toggleBtn, { '--complete': this.complete }, {
+                        '--complete': this.complete >= 50 ? 100 : 0,
+                        duration: 0.15,
+                        onComplete: () => {
+                            gsap.delayedCall(0.05, () => {
+                                toggleBtn.dataset.active = false;
+                                const newState = this.complete >= 50;
+                                toggleBtn.setAttribute('aria-pressed', newState);
+                                hiddenCheckbox.checked = newState;
+                            });
+                        },
+                    });
+                },
+                onPress: function () {
+                    this.__pressTime = Date.now();
+                    toggleBtn.dataset.active = 'true';
+                    toggleBtn.dataset.pressed = 'true';
+                },
+                onRelease: function () {
+                    this.__releaseTime = Date.now();
+                    gsap.set(toggleBtn, { '--delta': 0 });
+                    if (this.__releaseTime - this.__pressTime <= 150) {
+                        toggleState();
+                        return;
+                    }
+                    if (!this.isDragging) {
+                        toggleBtn.dataset.active = 'false';
+                        toggleBtn.dataset.pressed = 'false';
+                    }
+                },
+            });
+
+            toggleBtn.addEventListener('click', toggleState);
+            toggleBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter') toggleState();
+                if (e.key === ' ') e.preventDefault();
+            });
+            toggleBtn.addEventListener('keyup', (e) => { if (e.key === ' ') toggleState(); });
+        })();
+
+        // ===== Main App Logic =====
+        const apkFile = document.getElementById('apkFile');
+        const fileName = document.getElementById('fileName');
+        const fileButtonText = document.getElementById('fileButtonText');
+        const autoFill = document.getElementById('autoFill');
+        const moduleId = document.getElementById('moduleId');
+        const moduleName = document.getElementById('moduleName');
+        const moduleVersion = document.getElementById('moduleVersion');
+        const moduleVersionCode = document.getElementById('moduleVersionCode');
+        const moduleAuthor = document.getElementById('moduleAuthor');
+        const includeBin = document.getElementById('includeBin');
+        const binSourceContainer = document.getElementById('binSourceContainer');
+        const manualBinContainer = document.getElementById('manualBinContainer');
+        const binZipFile = document.getElementById('binZipFile');
+        const binFileName = document.getElementById('binFileName');
+        const binButtonText = document.getElementById('binButtonText');
+        const generateBtn = document.getElementById('generateBtn');
+        const statusDiv = document.getElementById('status');
+
+        // Constants
+        const BIN_URL = 'https://cdn.jsdelivr.net/gh/anemia004/pm-moduler-pro@main/assets/bin.zip';
+
+        // Default author
+        if (!moduleAuthor.value) moduleAuthor.value = 'anemia004';
+
+        // Visibility toggle for bin source
+        function updateBinVisibility() {
+            const checked = includeBin.checked;
+            binSourceContainer.style.display = checked ? 'flex' : 'none';
+            const manualSelected = document.querySelector('input[name="binSource"]:checked').value === 'manual';
+            manualBinContainer.style.display = (checked && manualSelected) ? 'block' : 'none';
+        }
+
+        includeBin.addEventListener('change', updateBinVisibility);
+        document.querySelectorAll('input[name="binSource"]').forEach(radio => {
+            radio.addEventListener('change', updateBinVisibility);
+        });
+        // Initial call
+        updateBinVisibility();
+
+        // File selection for APK
+        apkFile.addEventListener('change', async () => {
+            const file = apkFile.files[0];
+            if (!file) return;
+            fileName.textContent = file.name;
+            fileButtonText.textContent = '📎 ' + file.name;
+            if (autoFill.checked) {
+                await autoFillFromApk(file);
+            }
+        });
+
+        // File selection for manual bin.zip
+        binZipFile.addEventListener('change', () => {
+            const file = binZipFile.files[0];
+            if (file) {
+                binFileName.textContent = file.name;
+                binButtonText.textContent = '📦 ' + file.name;
+            }
+        });
+
+        async function autoFillFromApk(file) {
+            try {
+                if (typeof AppInfoParser === 'undefined') {
+                    throw new Error('AppInfoParser library not loaded.');
+                }
+                const parser = new AppInfoParser(file);
+                const result = await parser.parse();
+                if (!result) throw new Error('Parser returned empty result.');
+
+                moduleId.value = (result.package || '').replace(/[^a-zA-Z0-9._-]/g, '_');
+                moduleVersion.value = result.versionName || '';
+                moduleVersionCode.value = result.versionCode ? String(result.versionCode) : '';
+
+                let appName = '';
+                if (result.label) {
+                    appName = result.label;
+                } else if (result.application && result.application.label) {
+                    appName = result.application.label;
+                } else if (result.application && result.application.name) {
+                    appName = result.application.name;
+                } else if (result.package) {
+                    const parts = result.package.split('.');
+                    appName = parts[parts.length - 1];
+                }
+                moduleName.value = appName;
+
+                if (appName) {
+                    statusDiv.textContent = '✅ Auto-fill successful';
+                    statusDiv.className = 'status success';
+                } else {
+                    statusDiv.textContent = '⚠️ Could not extract app name. Please enter manually.';
+                    statusDiv.className = 'status error';
+                }
+            } catch (e) {
+                console.error('Auto-fill failed:', e);
+                const base = file.name.replace(/\.[^.]+$/, '');
+                moduleId.value = base.replace(/[^a-zA-Z0-9._-]/g, '_');
+                moduleName.value = '';
+                statusDiv.textContent = '❌ Auto-fill failed: ' + e.message + '. Please fill manually.';
+                statusDiv.className = 'status error';
+            }
+        }
+
+        generateBtn.addEventListener('click', async () => {
+            if (!apkFile.files.length) {
+                statusDiv.textContent = '❌ Please select an APK file.';
+                statusDiv.className = 'status error';
+                return;
+            }
+            const id = moduleId.value.trim();
+            if (!id) {
+                statusDiv.textContent = '❌ Module ID is required.';
+                statusDiv.className = 'status error';
+                return;
+            }
+            if (typeof fflate === 'undefined') {
+                statusDiv.textContent = '❌ fflate library not loaded.';
+                statusDiv.className = 'status error';
+                return;
+            }
+
+            const name = moduleName.value.trim() || 'My App';
+            const version = moduleVersion.value.trim() || 'v1.0';
+            const versionCode = moduleVersionCode.value.trim() || '1';
+            const author = moduleAuthor.value.trim() || 'anemia004';
+
+            generateBtn.disabled = true;
+            statusDiv.textContent = '⏳ Building module...';
+            statusDiv.className = 'status';
+
+            try {
+                const apkData = new Uint8Array(await apkFile.files[0].arrayBuffer());
+                const files = {};
+
+                function addText(path, content) {
+                    files[path] = new TextEncoder().encode(content);
+                }
+
+                const meta = 'META-INF/com/google/android/';
+                addText(meta + 'update-binary', `#!/sbin/sh\numask 022\nui_print() { echo "$1"; }\nrequire_new_magisk() {\n  ui_print "*******************************"\n  ui_print " Please install Magisk v20.4+! "\n  ui_print "*******************************"\n  exit 1\n}\nOUTFD=$2\nZIPFILE=$3\nmount /data 2>/dev/null\n[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk\n. /data/adb/magisk/util_functions.sh\n[ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk\ninstall_module\nexit 0`);
+                addText(meta + 'updater-script', '#MAGISK');
+                addText('module.prop', `id=${id}\nname=${name}\nversion=${version}\nversionCode=${versionCode}\nauthor=${author}\ndescription=Magisk module with APK (PM install)`);
+                addText('customize.sh', `#!/system/bin/sh\nMODPATH=\${MODPATH:-/data/adb/modules/${id}}\nAPK_FILE="$MODPATH/base.apk"\nui_print() { echo "$1"; }\npmex() { if command -v pm >/dev/null 2>&1; then pm "$@"; else cmd package "$@"; fi; }\nui_print "Installing APK..."\npmex install -r "$APK_FILE"\nif [ $? -eq 0 ]; then\n  ui_print "Success."\nelse\n  ui_print "Trying session install..."\n  SZ=$(wc -c < "$APK_FILE")\n  SES=$(pmex install-create --user 0 -i com.android.vending -r -S "$SZ" 2>&1 | grep -o '[0-9]*$')\n  if [ -n "$SES" ]; then\n    cat "$APK_FILE" | pmex install-write "$SES" base.apk\n    pmex install-commit "$SES"\n    [ $? -eq 0 ] && ui_print "Session install succeeded." || ui_print "Session install failed."\n  else\n    ui_print "Could not create session."\n  fi\nfi\nrm -f "$APK_FILE"\nui_print "Done."`);
+                addText('uninstall.sh', `#!/system/bin/sh\nui_print "Module removed. APK may remain installed."`);
+                addText('service.sh', `#!/system/bin/sh\nexit 0`);
+                files['base.apk'] = apkData;
+
+                if (includeBin.checked) {
+                    const source = document.querySelector('input[name="binSource"]:checked').value;
+                    let binZipData = null;
+
+                    if (source === 'manual') {
+                        if (!binZipFile.files.length) {
+                            statusDiv.textContent = '❌ Please select a bin.zip file.';
+                            statusDiv.className = 'status error';
+                            generateBtn.disabled = false;
+                            return;
+                        }
+                        binZipData = new Uint8Array(await binZipFile.files[0].arrayBuffer());
+                    } else {
+                        try {
+                            const resp = await fetch(BIN_URL);
+                            if (!resp.ok) throw new Error(`Repo download failed (status ${resp.status})`);
+                            binZipData = new Uint8Array(await resp.arrayBuffer());
+                        } catch (e) {
+                            console.error(e);
+                            statusDiv.textContent = '❌ Auto-download failed: ' + e.message + '. Switch to manual upload.';
+                            statusDiv.className = 'status error';
+                            generateBtn.disabled = false;
+                            return;
+                        }
+                    }
+
+                    const unzipped = fflate.unzipSync(binZipData);
+                    let binFilesAdded = false;
+                    for (const [path, content] of Object.entries(unzipped)) {
+                        const normalized = path.replace(/\\/g, '/');
+                        const parts = normalized.split('/').filter(p => p !== '');
+                        const binIndex = parts.indexOf('bin');
+                        if (binIndex !== -1) {
+                            const relativeParts = parts.slice(binIndex + 1);
+                            if (relativeParts.length > 0) {
+                                files['bin/' + relativeParts.join('/')] = content;
+                                binFilesAdded = true;
+                            }
+                        } else {
+                            // No bin folder found: assume the file itself goes under bin/
+                            files['bin/' + normalized] = content;
+                            binFilesAdded = true;
+                        }
+                    }
+                    if (!binFilesAdded) {
+                        throw new Error('No files found in the downloaded zip');
+                    }
+                    // Optional: log how many files were added
+                    console.log(`Added ${Object.keys(files).filter(f => f.startsWith('bin/')).length} bin files`);
+                }
+
+                const zipped = fflate.zipSync(files, { level: 9 });
+                const blob = new Blob([zipped], { type: 'application/zip' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${id}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                statusDiv.textContent = '✅ Module ZIP generated!';
+                statusDiv.className = 'status success';
+            } catch (e) {
+                console.error(e);
+                statusDiv.textContent = '❌ Error: ' + e.message;
+                statusDiv.className = 'status error';
+            } finally {
+                generateBtn.disabled = false;
+            }
+        });
+    </script>
+</body>
+</html>

@@ -290,7 +290,7 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
             transform: none;
         }
 
-        /* ===== LIQUID TOGGLE CSS (unchanged) ===== */
+        /* ===== LIQUID TOGGLE CSS ===== */
         :root { --transition: 0.2s; --ease: ease-out; }
         [data-pressed=true] .liquid__track { min-height: 30px; }
         [data-bounce='true']:has(:is(button:active, [data-pressed="true"])) { --transition: 0.6s; --ease: linear(0 0%, 0.6091 3.69%, 1.0259 7.24%, 1.1733 9.05%, 1.283 10.92%, 1.3562 12.87%, 1.3948 14.95%, 1.4014 16.03%, 1.3999 17.16%, 1.3731 19.64%, 1.3202 22.27%, 1.1394 29.39%, 1.0582 33.17%, 0.9943 37.45%, 0.9734 39.64%, 0.9593 41.92%, 0.9505 45.08%, 0.9517 48.7%, 0.9924 63.02%, 1.0046 71.2%, 1.0061 78.24%, 1 100%); }
@@ -326,6 +326,62 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
         .indicator__liquid { position: absolute; height: calc(100% - (2 * var(--border))); width: calc(60% - (2 * var(--border))); container-type: inline-size; top: 50%; background: #0000; left: var(--border); border-radius: 100px; }
         .indicator__liquid .shadow { opacity: 0; content: ''; position: absolute; inset: 0; border-radius: 100px; box-shadow: 1px -1px 2px hsl(0 0% 100% / 0.5) inset, 0px -1px 2px hsl(0 0% 100% / 0.5) inset, -1px -1px 2px hsl(0 0% 100% / 0.5) inset, 1px 1px 2px hsl(0 0% 30% / 0.5) inset, -8px 4px 10px -6px hsl(0 0% 30% / 0.25) inset, -1px 1px 6px hsl(0 0% 30% / 0.25) inset, -1px -1px 8px hsl(0 0% 60% / 0.15), 1px 1px 2px hsl(0 0% 30% / 0.15), 2px 2px 6px hsl(0 0% 30% / 0.15), -2px -1px 2px hsl(0 0% 100% / 0.25) inset, 3px 6px 16px -6px hsl(0 0% 30% / 0.5); z-index: 20; }
         .indicator__liquid .cover { content: ''; position: absolute; inset: 0; background: white; border-radius: 100px; }
+
+        /* ===== RESPONSIVE DESIGN ===== */
+        @media (max-width: 600px) {
+            .glass-wrapper {
+                width: 95%;
+                max-height: 90vh;
+                padding: 1.5rem;
+                border-radius: 1.5rem;
+            }
+            h2 {
+                font-size: 1.8rem;
+            }
+            .form-container {
+                gap: 1rem;
+            }
+            input[type="text"] {
+                padding: 0.7rem 1rem;
+                font-size: 0.95rem;
+            }
+            .file-label {
+                padding: 0.8rem;
+                font-size: 0.9rem;
+            }
+            .btn {
+                padding: 1rem;
+                font-size: 1rem;
+            }
+            .status {
+                font-size: 0.85rem;
+                padding: 0.8rem;
+            }
+            .toggle-label {
+                font-size: 0.8rem;
+            }
+            .glass-checkbox-label {
+                font-size: 0.8rem;
+            }
+            .field label.title {
+                font-size: 0.7rem;
+            }
+            /* Adjust two-column fields to stack on small screens */
+            div[style*="display: flex; gap: 1rem;"] {
+                flex-direction: column !important;
+                gap: 0.75rem !important;
+            }
+        }
+
+        @media (max-height: 700px) {
+            .glass-wrapper {
+                max-height: 95vh;
+                padding: 1.5rem;
+            }
+            .form-container {
+                gap: 0.8rem;
+            }
+        }
     </style>
 </head>
 <body>

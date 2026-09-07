@@ -792,7 +792,7 @@ PKG_VER="${version}"
 RVPATH="/data/adb/rvhc/${id}.apk"
 export PKG_NAME PKG_VER RVPATH
 
-pmex() { if command -v pm >/dev/null 2>&1; then pm "$@"; else cmd package "$@"; fi; }
+pmex() { if command -v pm >/dev/null 2>&1; then pm "$@" 2>&1 </dev/null; else cmd package "$@" 2>&1 </dev/null; fi; }
 
 get_basepath() {
     local pkg="$1"

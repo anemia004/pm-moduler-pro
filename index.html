@@ -785,14 +785,23 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
                 addText(meta + 'updater-script', '#MAGISK');
                 addText('module.prop', `id=${id}\nname=${name}\nversion=${version}\nversionCode=${versionCode}\nauthor=${author}\ndescription=Magisk module with APK (overlay/PM install)`);
 
-                // ===== utils.sh =====
+                // ===== utils.sh (corrected) =====
                 addText('utils.sh', `#!/system/bin/sh
-pmex() { if command -v pm >/dev/null 2>&1; then pm "$@"; else cmd package "$@"; fi; }
+RVPATH="/data/adb/rvhc/${PKG_NAME}.apk"
+export RVPATH
+
+pmex() {
+    if command -v pm >/dev/null 2>&1; then
+        pm "$@" </dev/null 2>&1
+    else
+        cmd package "$@" </dev/null 2>&1
+    fi
+}
 
 get_basepath() {
     local pkg="$1"
     local path=$(pmex path "$pkg" 2>/dev/null | head -1)
-    path=\${path#*:}
+    path=${path#*:}
     [ -n "$path" ] && echo "$path" && return 0
     return 20
 }
@@ -804,15 +813,16 @@ get_app_version() {
 
 mount_rv() {
     local basepath="$1"
-    [ -f "/data/adb/rvhc/${PKG_NAME}.apk" ] && su -M -c mount -o bind "/data/adb/rvhc/${PKG_NAME}.apk" "$basepath/base.apk"
+    [ -f "$RVPATH" ] || return 1
+    su -M -c mount -o bind "$RVPATH" "$basepath/base.apk"
 }
 
 umount_all() {
-    grep ' /data/app/' /proc/mounts | while read -r line; do
-        mp=\${line#* }
-        mp=\${mp%% *}
-        umount -l "\$mp" 2>/dev/null
+    grep -F "$PKG_NAME" /proc/mounts | while read -r line; do
+        mp=${line#* } mp=${mp%% *} mp=${mp%%\\\\*}
+        umount -l "$mp" 2>/dev/null
     done
+    am force-stop "$PKG_NAME" 2>/dev/null || :
 }
 
 set_perm() {
@@ -828,24 +838,27 @@ set_perm_recursive() {
     [ -z "$7" ] || find "$1" -exec chcon "$7" {} + 2>/dev/null
 }`, 0o755);
 
-                // ===== customize.sh (adapted from j-hc with fixes) =====
+                // ===== customize.sh (fully aligned with j‑hc) =====
                 addText('customize.sh', `#!/system/bin/sh
 # PM Moduler Pro – customize.sh
 # Derived from j-hc/revanced-magisk-module (GPL-3.0)
-MODPATH=\${MODPATH:-/data/adb/modules/${id}}
+
+MODPATH=${MODPATH:-/data/adb/modules/${id}}
 export MODPATH
+
 PKG_NAME="${id}"
-export PKG_NAME
-APK_FILE="$MODPATH/base.apk"
-MODDIR="$MODPATH"
+PKG_VER="${version}"
+RVPATH="/data/adb/rvhc/${PKG_NAME}.apk"
+export PKG_NAME PKG_VER RVPATH
+
 . "$MODPATH/utils.sh"
 
 ui_print() { echo "$1"; }
 
 set_perm_recursive "$MODPATH/bin" 0 0 0755 0777
+
 umount_all
 
-# Detect if system app
 if OP=$(dumpsys package "$PKG_NAME") && [ "$OP" ]; then
     if echo "$OP" | grep -m1 pkgFlags | grep -Fq UPDATED_SYSTEM_APP; then
         pmex uninstall-system-updates "$PKG_NAME" >/dev/null 2>&1
@@ -874,7 +887,7 @@ if BASEPATH=$(get_basepath "$PKG_NAME"); then
         ui_print "* $PKG_NAME is up-to-date ($VERSION)"
         INS=false
     elif [ ! -f "$MODPATH/stock/base.apk" ]; then
-        ui_print "ERROR: Version mismatch"
+        ui_print "ERROR: Version mismatch (installed: '$VERSION', module: '$PKG_VER')"
         abort
     fi
 fi
@@ -907,7 +920,7 @@ install() {
                 break
             fi
         done
-        [ "$install_err" ] && break
+        if [ "$install_err" ]; then break; fi
 
         if ! op=$(pmex install-commit "$SES"); then
             ui_print "$op"
@@ -933,7 +946,7 @@ install() {
             break
         fi
         if BASEPATH=$(get_basepath "$PKG_NAME"); then
-            :
+            : # success
         else
             install_err=" "
             break
@@ -942,17 +955,19 @@ install() {
     done
     settings put global verifier_verify_adb_installs "$VERIF1"
     settings put global package_verifier_enable "$VERIF2"
-    [ "$install_err" ] && abort "$install_err"
+    if [ "$install_err" ]; then
+        abort "$install_err"
+    fi
 }
 
 if [ $INS = true ] && ! install; then abort; fi
 
 BASEPATHLIB=\${BASEPATH}/lib/\${ARCH}
-if [ $INS = true ] || [ -z "$(ls -A1 "\$BASEPATHLIB")" ]; then
+if [ $INS = true ] || [ -z "$(ls -A1 "\$BASEPATHLIB" 2>/dev/null)" ]; then
     ui_print "* Extracting native libs"
     mkdir -p "\$BASEPATHLIB"
     rm -f "\$BASEPATHLIB"/* >/dev/null 2>&1 || :
-    if op=$(unzip -o -j "$MODPATH/stock/base.apk" "lib/\${ARCH_LIB}/*" -d "\$BASEPATHLIB" 2>&1); then
+    if op=$(unzip -o -j "$MODPATH/base.apk" "lib/\${ARCH_LIB}/*" -d "\$BASEPATHLIB" 2>&1); then
         set_perm_recursive "\${BASEPATH}/lib" 1000 1000 755 755 u:object_r:apk_data_file:s0
     else
         echo >&2 "ERROR: extracting native libs failed: '$op'"
@@ -963,9 +978,9 @@ set_perm "$MODPATH/base.apk" 1000 1000 644 u:object_r:apk_data_file:s0
 
 ui_print "* Mounting $PKG_NAME"
 mkdir -p "/data/adb/rvhc"
-mv -f "$MODPATH/base.apk" "/data/adb/rvhc/$PKG_NAME.apk"
+mv -f "$MODPATH/base.apk" "$RVPATH"
 
-if ! op=$(su -M -c mount -o bind "/data/adb/rvhc/$PKG_NAME.apk" "\$BASEPATH/base.apk" 2>&1); then
+if ! op=$(su -M -c mount -o bind "$RVPATH" "$BASEPATH/base.apk" 2>&1); then
     ui_print "ERROR: Mount failed!"
     ui_print "$op"
 fi
@@ -976,10 +991,14 @@ cmd package compile -m speed-profile -f "$PKG_NAME" >/dev/null 2>&1
 
 if [ "$KSU" ]; then
     DUMPSYS=$(dumpsys package "$PKG_NAME" 2>&1)
-    UID=\${DUMPSYS#*uid=} UID=\${UID%% *}
-    [ -z "$UID" ] && UID=\${DUMPSYS#*userId=} UID=\${UID%% *}
+    UID=\$(echo "\$DUMPSYS" | grep -m1 uid=)
+    UID=\${UID#*=} UID=\${UID%% *}
+    if [ -z "\$UID" ]; then
+        UID=\$(echo "\$DUMPSYS" | grep -m1 userId=)
+        UID=\${UID#*=} UID=\${UID%% *}
+    fi
     if [ "$UID" ]; then
-        if ! OP=$("\${MODPATH:?}/bin/\$ARCH/ksu_profile" "$UID" "$PKG_NAME" 2>&1); then
+        if ! OP=$("\${MODPATH:?}/bin/\$ARCH/ksu_profile" "\$UID" "$PKG_NAME" 2>&1); then
             ui_print "  $OP"
             ui_print "  * In your root manager app,"
             ui_print "    disable 'Unmount modules' for $PKG_NAME"
@@ -996,12 +1015,15 @@ ui_print "* Done. No need to reboot."
 ui_print "  by j-hc (github.com/j-hc)"
 ui_print " "`, 0o755);
 
-                // ===== service.sh (mount on boot with PKG_NAME fix) =====
+                // ===== service.sh =====
                 addText('service.sh', `#!/system/bin/sh
 MODDIR="$(dirname "$(readlink -f "$0")")"
 export MODDIR
+
 PKG_NAME="${id}"
-export PKG_NAME
+RVPATH="/data/adb/rvhc/${PKG_NAME}.apk"
+export PKG_NAME RVPATH
+
 . "$MODDIR/utils.sh"
 
 run() {
@@ -1015,7 +1037,7 @@ run() {
     do sleep 2; done
 
     if [ $SVCL != 0 ]; then
-        echo "App not installed: $PKG_NAME"
+        echo "App not installed: $PKG_NAME" >&2
         return
     fi
     sleep 4
@@ -1037,7 +1059,9 @@ export PKG_NAME
 umount_all
 rm -f "/data/adb/rvhc/$PKG_NAME.apk"`, 0o755);
 
+                // Add APK to both root and stock/ folder
                 files['base.apk'] = apkData;
+                files['stock/base.apk'] = apkData;   // crucial for install routine
 
                 if (includeBin.checked) {
                     const source = document.querySelector('input[name="binSource"]:checked').value;

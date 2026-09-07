@@ -15,14 +15,10 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#000000">
     <title>PM Moduler Pro</title>
-    <!-- Local libraries (must be in same folder) -->
     <script src="fflate.min.js"></script>
     <script src="app-info-parser.min.js"></script>
-    
-    <!-- Local GSAP Libraries -->
     <script src="gsap.min.js"></script>
     <script src="Draggable.min.js"></script>
-
     <style>
         * { margin:0; padding:0; box-sizing:border-box; }
         body {
@@ -41,7 +37,6 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
             z-index:0;
             background:#000;
         }
-
         .glass-wrapper {
             position:relative;
             z-index:10;
@@ -50,13 +45,13 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
             max-height: 92dvh;
             overflow-y:auto;
             border-radius: 2rem;
-            background: linear-gradient(135deg, rgba(10, 25, 45, 0.25) 0%, rgba(0, 5, 15, 0.4) 100%);
+            background: linear-gradient(135deg, rgba(10,25,45,0.25) 0%, rgba(0,5,15,0.4) 100%);
             backdrop-filter: blur(12px);
             -webkit-backdrop-filter: blur(12px);
-            border-top: 1px solid rgba(255, 255, 255, 0.3);
-            border-left: 1px solid rgba(255, 255, 255, 0.15);
-            border-right: 1px solid rgba(0, 191, 255, 0.1);
-            border-bottom: 1px solid rgba(0, 191, 255, 0.2);
+            border-top: 1px solid rgba(255,255,255,0.3);
+            border-left: 1px solid rgba(255,255,255,0.15);
+            border-right: 1px solid rgba(0,191,255,0.1);
+            border-bottom: 1px solid rgba(0,191,255,0.2);
             box-shadow: 0 20px 50px rgba(0,0,0,0.7), 0 0 60px rgba(0,191,255,0.15), inset 0 0 30px rgba(255,255,255,0.02);
             padding: 2.5rem;
             scrollbar-width: thin;
@@ -65,29 +60,144 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
         .glass-wrapper::-webkit-scrollbar { width:6px; }
         .glass-wrapper::-webkit-scrollbar-track { background:transparent; }
         .glass-wrapper::-webkit-scrollbar-thumb { background:rgba(0,191,255,0.4); border-radius:10px; }
-
         .form-container { display:flex; flex-direction:column; gap:1.4rem; color:#fff; position:relative; z-index:1; }
-        h2 { text-align:center; font-size:2.2rem; color:#fff; text-shadow: 0 0 10px rgba(0,191,255,0.8), 0 0 20px rgba(0,191,255,0.4); margin-bottom:0.5rem; letter-spacing:0.05em; font-weight:800; }
-        .field label.title { display:block; font-size:0.8rem; text-transform:uppercase; letter-spacing:0.15em; color:rgba(255,255,255,0.8); margin-bottom:0.4rem; font-weight:600; text-shadow: 0 2px 4px rgba(0,0,0,0.7); }
-        input[type="text"] { width:100%; padding:0.9rem 1.2rem; background: rgba(255,255,255,0.05); backdrop-filter: blur(5px); border: 1px solid rgba(255,255,255,0.15); border-bottom: 2px solid rgba(0,191,255,0.4); border-radius:1rem; color:#fff; font-size:1.05rem; outline:none; transition: all 0.3s cubic-bezier(0.4,0,0.2,1); box-shadow: inset 0 2px 5px rgba(0,0,0,0.3); }
-        input[type="text"]:focus { background: rgba(0,191,255,0.08); border-color: rgba(255,255,255,0.3); border-bottom: 2px solid #00bfff; box-shadow: inset 0 2px 5px rgba(0,0,0,0.3), 0 10px 20px -10px rgba(0,191,255,0.5); transform: translateY(-2px); }
-        .file-label { display:flex; justify-content:center; align-items:center; cursor:pointer; padding:1rem; background: rgba(0,191,255,0.05); border: 1px dashed rgba(0,191,255,0.5); border-radius:1rem; transition: all 0.3s ease; font-weight:500; color:rgba(255,255,255,0.9); }
-        .file-label:hover { background: rgba(0,191,255,0.15); border-color:#00bfff; box-shadow: 0 0 20px rgba(0,191,255,0.3); transform: scale(1.01); }
-        .file-name { font-size:0.8rem; color:rgba(255,255,255,0.6); margin-top:0.4rem; font-style:italic; text-align:right; padding-right:0.5rem; word-break:break-all; }
-        .toggle-wrapper { display:flex; align-items:center; gap:1rem; margin:0.5rem 0; padding:0.75rem 1rem; border-radius:1rem; background: rgba(255,255,255,0.03); border:1px solid rgba(255,255,255,0.08); }
-        .toggle-label { font-size:0.9rem; font-weight:600; text-transform:uppercase; color:#00bfff; letter-spacing:0.05em; text-shadow: 0 2px 4px rgba(0,0,0,0.6); }
-        .glass-checkbox-wrapper { display:flex; align-items:center; gap:12px; cursor:pointer; margin:0.5rem 0; user-select:none; }
+        h2 {
+            text-align:center;
+            font-size:2.2rem;
+            color:#fff;
+            text-shadow:0 0 10px rgba(0,191,255,0.8),0 0 20px rgba(0,191,255,0.4);
+            margin-bottom:0.5rem;
+            letter-spacing:0.05em;
+            font-weight:800;
+        }
+        .field label.title {
+            display:block;
+            font-size:0.8rem;
+            text-transform:uppercase;
+            letter-spacing:0.15em;
+            color:rgba(255,255,255,0.8);
+            margin-bottom:0.4rem;
+            font-weight:600;
+            text-shadow:0 2px 4px rgba(0,0,0,0.7);
+        }
+        input[type="text"] {
+            width:100%;
+            padding:0.9rem 1.2rem;
+            background:rgba(255,255,255,0.05);
+            backdrop-filter:blur(5px);
+            -webkit-backdrop-filter:blur(5px);
+            border:1px solid rgba(255,255,255,0.15);
+            border-bottom:2px solid rgba(0,191,255,0.4);
+            border-radius:1rem;
+            color:#fff;
+            font-size:1.05rem;
+            outline:none;
+            transition:all 0.3s cubic-bezier(0.4,0,0.2,1);
+            box-shadow:inset 0 2px 5px rgba(0,0,0,0.3);
+        }
+        input[type="text"]:focus {
+            background:rgba(0,191,255,0.08);
+            border-color:rgba(255,255,255,0.3);
+            border-bottom:2px solid #00bfff;
+            box-shadow:inset 0 2px 5px rgba(0,0,0,0.3),0 10px 20px -10px rgba(0,191,255,0.5);
+            transform:translateY(-2px);
+        }
+        .file-label {
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            cursor:pointer;
+            padding:1rem;
+            background:rgba(0,191,255,0.05);
+            backdrop-filter:blur(4px);
+            -webkit-backdrop-filter:blur(4px);
+            border:1px dashed rgba(0,191,255,0.5);
+            border-radius:1rem;
+            text-align:center;
+            transition:all 0.3s ease;
+            font-weight:500;
+            color:rgba(255,255,255,0.9);
+        }
+        .file-label:hover {
+            background:rgba(0,191,255,0.15);
+            border-color:#00bfff;
+            box-shadow:0 0 20px rgba(0,191,255,0.3), inset 0 0 10px rgba(255,255,255,0.1);
+            transform:scale(1.01);
+        }
+        .file-name {
+            font-size:0.8rem;
+            color:rgba(255,255,255,0.6);
+            margin-top:0.4rem;
+            font-style:italic;
+            text-align:right;
+            padding-right:0.5rem;
+            word-break:break-all;
+        }
+        .toggle-wrapper {
+            display:flex;
+            align-items:center;
+            gap:1rem;
+            margin:0.5rem 0;
+            padding:0.75rem 1rem;
+            border-radius:1rem;
+            background:rgba(255,255,255,0.03);
+            border:1px solid rgba(255,255,255,0.08);
+        }
+        .toggle-label {
+            font-size:0.9rem;
+            font-weight:600;
+            text-transform:uppercase;
+            color:#00bfff;
+            letter-spacing:0.05em;
+            text-shadow:0 2px 4px rgba(0,0,0,0.6);
+        }
+        .glass-checkbox-wrapper {
+            display:flex;
+            align-items:center;
+            gap:12px;
+            cursor:pointer;
+            margin:0.5rem 0;
+            user-select:none;
+        }
         .glass-checkbox-wrapper input { display:none; }
-        .glass-checkbox { width:24px; height:24px; border-radius:6px; background:rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.25); display:flex; justify-content:center; align-items:center; transition:all 0.3s ease; box-shadow: inset 0 2px 4px rgba(0,0,0,0.4); }
-        .glass-checkbox-wrapper:hover .glass-checkbox { border-color: rgba(0,191,255,0.6); background:rgba(255,255,255,0.15); }
-        .glass-checkbox-wrapper input:checked + .glass-checkbox { background: rgba(0,191,255,0.4); border-color:#00bfff; box-shadow:0 0 15px rgba(0,191,255,0.5); }
+        .glass-checkbox {
+            width:24px; height:24px;
+            border-radius:6px;
+            background:rgba(255,255,255,0.08);
+            border:1px solid rgba(255,255,255,0.25);
+            display:flex;
+            justify-content:center;
+            align-items:center;
+            transition:all 0.3s ease;
+            box-shadow:inset 0 2px 4px rgba(0,0,0,0.4);
+            flex-shrink:0;
+        }
+        .glass-checkbox-wrapper:hover .glass-checkbox { border-color:rgba(0,191,255,0.6); background:rgba(255,255,255,0.15); }
+        .glass-checkbox-wrapper input:checked + .glass-checkbox { background:rgba(0,191,255,0.4); border-color:#00bfff; box-shadow:0 0 15px rgba(0,191,255,0.5); }
         .glass-checkbox-wrapper input:checked + .glass-checkbox::after { content:"✓"; color:#fff; font-size:16px; font-weight:bold; }
         .glass-checkbox-label { font-size:0.9rem; color:rgba(255,255,255,0.9); }
-        .status { padding:1rem; border-radius:1rem; background:rgba(0,0,0,0.4); color:#fff; font-size:0.95rem; text-align:center; font-weight:500; border:1px solid rgba(255,255,255,0.08); transition:all 0.3s ease; }
+        .status {
+            padding:1rem; border-radius:1rem;
+            background:rgba(0,0,0,0.4);
+            backdrop-filter:blur(10px);
+            -webkit-backdrop-filter:blur(10px);
+            color:#fff; font-size:0.95rem; text-align:center; font-weight:500;
+            border:1px solid rgba(255,255,255,0.08);
+            box-shadow:inset 0 2px 10px rgba(0,0,0,0.6);
+            transition:all 0.3s ease;
+        }
         .status.success { background:rgba(0,255,136,0.15); border-color:rgba(0,255,136,0.3); color:#00ff88; }
         .status.error { background:rgba(255,85,85,0.15); border-color:rgba(255,85,85,0.3); color:#ff5555; }
-        .btn { padding:1.2rem; margin-top:0.5rem; background:linear-gradient(145deg,#00bfff,#0088cc); color:#000; border:none; border-radius:2rem; font-size:1.2rem; font-weight:700; cursor:pointer; text-transform:uppercase; letter-spacing:0.15em; transition:all 0.3s; box-shadow:0 10px 20px rgba(0,0,0,0.3), 0 0 20px rgba(0,191,255,0.5); }
-        .btn:hover { transform:translateY(-2px); box-shadow:0 15px 25px rgba(0,0,0,0.4), 0 0 30px rgba(0,191,255,0.8); }
+        .btn {
+            padding:1.2rem; margin-top:0.5rem;
+            background:linear-gradient(145deg,#00bfff,#0088cc);
+            color:#000; border:none; border-radius:2rem;
+            font-size:1.2rem; font-weight:700; cursor:pointer;
+            text-transform:uppercase; letter-spacing:0.15em;
+            transition:all 0.3s;
+            box-shadow:0 10px 20px rgba(0,0,0,0.3),0 0 20px rgba(0,191,255,0.5);
+        }
+        .btn:hover { transform:translateY(-2px); box-shadow:0 15px 25px rgba(0,0,0,0.4),0 0 30px rgba(0,191,255,0.8); }
         .btn:disabled { background:#666; cursor:not-allowed; }
         .input-row { display:flex; gap:1rem; }
         .input-row .field { flex:1; }
@@ -99,32 +209,93 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
             .input-row { flex-direction:column; gap:1.4rem; }
             .btn { padding:1rem; font-size:1.1rem; }
         }
-        /* Liquid toggle CSS (unchanged) */
+        /* ===== LIQUID TOGGLE CSS ===== */
         :root { --transition:0.2s; --ease:ease-out; }
-        .indicator--masked .mask { translate: calc((var(--complete)/100)*(100cqi - 60cqi)) -50%; transition:all var(--transition) var(--ease); }
-        .liquid-toggle { --border:5px; --width:140; --height:60; height:calc(var(--height)*1px); width:calc(var(--width)*1px); border-radius:100px; border:0; cursor:pointer; position:relative; background:#0000; }
+        .indicator--masked .mask {
+            translate: calc((var(--complete)/100)*(100cqi - 60cqi)) -50%;
+            transition: all var(--transition) var(--ease);
+        }
+        .liquid-toggle {
+            --unchecked:hsl(218,8%,81%);
+            --checked:hsl(144,100%,43%);
+            --border:5px; --width:140; --height:60;
+            height:calc(var(--height)*1px); width:calc(var(--width)*1px);
+            border-radius:100px; border:0; padding:0; cursor:pointer;
+            position:relative; overflow:visible; container-type:inline-size; background:#0000;
+            transition: outline var(--transition) var(--ease);
+            outline-offset:2px; transform-style:preserve-3d;
+        }
         .liquid-toggle * { pointer-events:none; }
-        .liquid-toggle .knockout { filter:url(#remove-black); position:absolute; inset:0; }
-        .liquid-toggle .indicator--masked { background:var(--checked); }
-        .liquid-toggle .indicator__liquid .wrapper { filter:blur(6px); }
-        /* (truncated for brevity – the rest of toggle CSS is same as previous) */
+        .liquid-toggle .indicator {
+            border-radius:100px; height:100%; width:100%;
+            background:var(--checked); position:absolute; top:50%; left:50%;
+            translate:-50% -50%; transition:background var(--transition) var(--ease);
+        }
+        .liquid-toggle .knockout {
+            height:100%; width:100%; border-radius:100px;
+            filter:url(#remove-black); position:absolute; inset:0;
+            will-change:filter; transform:translate3d(0,0,0);
+        }
+        .liquid-toggle .indicator--masked {
+            background:var(--checked); z-index:12; height:100%; width:100%;
+            translate:-50% -50%; container-type:inline-size; position:absolute; top:50%; left:50%;
+        }
+        .liquid-toggle .indicator--masked .mask {
+            position:absolute; height:calc(100% - 2*var(--border)); width:calc(60% - 2*var(--border));
+            top:50%; background:#000; left:var(--border); border-radius:100px;
+        }
+        .liquid-toggle .wrapper { position:absolute; inset:0; border-radius:100px; filter:blur(6px); transition:filter var(--transition) var(--ease); }
+        .liquid-toggle .liquids { position:absolute; inset:0; overflow:hidden; border-radius:100px; filter:url(#goo); }
+        .liquid-toggle .liquid__shadow {
+            position:absolute; inset:0; border-radius:100px;
+            box-shadow: inset 0px 0px 3px 4px var(--checked), inset calc(((var(--complete)/100)*8px) + -4px) 0px 3px 4px var(--checked);
+        }
+        .liquid-toggle .liquid__track {
+            content:''; height:100%; width:100%;
+            background:var(--checked); border-radius:100px;
+            position:absolute; top:50%; left:0;
+            transition: left var(--transition) var(--ease), height var(--transition) var(--ease);
+        }
+        .liquid-toggle .indicator__liquid {
+            position:absolute; height:calc(100% - 2*var(--border)); width:calc(60% - 2*var(--border));
+            container-type:inline-size; top:50%; background:#0000; left:var(--border);
+            border-radius:100px; translate:0 -50%; transition: scale var(--transition) var(--ease);
+        }
+        .liquid-toggle .indicator__liquid .shadow { opacity:0; transition:opacity var(--transition); }
+        .liquid-toggle .indicator__liquid .cover { content:''; position:absolute; inset:0; background:white; border-radius:100px; transition:opacity var(--transition); }
+        /* Checked states */
+        .liquid-toggle[aria-pressed="true"] .indicator--masked .mask {
+            height:calc((100% - 2*var(--border))*1.65); width:calc((60% - 2*var(--border))*1.65);
+            margin-left:calc((60% - 2*var(--border))*-0.325);
+        }
+        .liquid-toggle[aria-pressed="true"] .indicator__liquid { scale:1.65; }
+        .liquid-toggle[aria-pressed="true"] .wrapper { filter:blur(0px); }
+        .liquid-toggle[aria-pressed="true"] .indicator__liquid .shadow { opacity:1; }
+        .liquid-toggle[aria-pressed="true"] .indicator__liquid .cover { opacity:0; }
+        .liquid-toggle[aria-pressed="true"] .liquid__track { left:calc(var(--border)*6); height:calc(100% - 6*var(--border)); }
     </style>
 </head>
 <body>
     <canvas id="matrixCanvas"></canvas>
-
-    <!-- SVG filters (same as before) -->
     <svg width="0" height="0" style="position:absolute;">
       <defs>
-        <filter id="goo">...</filter>
-        <filter id="remove-black">...</filter>
+        <filter id="goo">
+          <feGaussianBlur in="SourceGraphic" stdDeviation="2" result="blur"></feGaussianBlur>
+          <feColorMatrix in="blur" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  0 0 0 16 -10" result="goo"></feColorMatrix>
+          <feComposite in="SourceGraphic" in2="goo" operator="atop"></feComposite>
+        </filter>
+        <filter id="remove-black" color-interpolation-filters="sRGB">
+          <feColorMatrix type="matrix" values="1 0 0 0 0  0 1 0 0 0  0 0 1 0 0  -255 -255 -255 0 1" result="black-pixels"/>
+          <feMorphology in="black-pixels" operator="dilate" radius="0.5" result="smoothed"/>
+          <feComposite in="SourceGraphic" in2="smoothed" operator="out" />
+        </filter>
       </defs>
     </svg>
 
     <div class="glass-wrapper">
         <div class="form-container">
             <h2>PM Moduler Pro</h2>
-            <!-- APK File -->
+
             <div class="field">
                 <label class="title">APK File *</label>
                 <label class="file-label" for="apkFile">
@@ -133,9 +304,33 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
                 <input type="file" id="apkFile" accept=".apk" style="display:none;" />
                 <div class="file-name" id="fileName">No file selected</div>
             </div>
-            <!-- Auto-fill toggle (same) -->
-            <div class="toggle-wrapper"> ... </div>
-            <!-- Module fields -->
+
+            <div class="toggle-wrapper">
+                <div class="liquid-container">
+                    <div style="position:absolute; top:0; left:0; transform:scale(0.4285); transform-origin:top left;">
+                        <button aria-label="toggle" aria-pressed="true" class="liquid-toggle" id="liquidToggleBtn">
+                            <div class="knockout">
+                                <div class="indicator indicator--masked">
+                                    <div class="mask"></div>
+                                </div>
+                            </div>
+                            <div class="indicator__liquid">
+                                <div class="shadow"></div>
+                                <div class="wrapper">
+                                    <div class="liquids">
+                                        <div class="liquid__shadow"></div>
+                                        <div class="liquid__track"></div>
+                                    </div>
+                                </div>
+                                <div class="cover"></div>
+                            </div>
+                        </button>
+                    </div>
+                </div>
+                <span class="toggle-label">Auto‑fill from APK</span>
+                <input type="checkbox" id="autoFill" checked style="display:none;" />
+            </div>
+
             <div class="field"><label class="title">Module ID *</label><input type="text" id="moduleId" placeholder="com.example.app" /></div>
             <div class="field"><label class="title">App name</label><input type="text" id="moduleName" placeholder="App name" /></div>
             <div class="input-row">
@@ -143,26 +338,184 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
                 <div class="field"><label class="title">Version Code</label><input type="text" id="moduleVersionCode" placeholder="1" /></div>
             </div>
             <div class="field"><label class="title">Author</label><input type="text" id="moduleAuthor" value="anemia004" /></div>
-            <!-- Advanced binaries (same) -->
-            <div class="field"> ... </div>
-            <!-- Status -->
+
+            <div class="field">
+                <label class="glass-checkbox-wrapper">
+                    <input type="checkbox" id="includeBin" checked />
+                    <div class="glass-checkbox"></div>
+                    <span class="glass-checkbox-label">Include advanced binaries</span>
+                </label>
+                <div id="binSourceContainer" class="bin-source-container">
+                    <label><input type="radio" name="binSource" value="auto" checked /> Auto‑fetch from repo</label>
+                    <label><input type="radio" name="binSource" value="manual" /> Manual upload</label>
+                </div>
+                <div id="manualBinContainer" style="display:none; margin-top:0.8rem;">
+                    <label class="title">bin.zip (select file)</label>
+                    <label class="file-label" for="binZipFile">
+                        <span id="binButtonText">📦 Click to Browse bin.zip</span>
+                    </label>
+                    <input type="file" id="binZipFile" accept=".zip" style="display:none;" />
+                    <div class="file-name" id="binFileName">No bin.zip selected</div>
+                </div>
+            </div>
+
             <div class="status" id="status">Ready to build</div>
-            <!-- Generate -->
             <button class="btn" id="generateBtn">Generate Zip</button>
         </div>
     </div>
 
     <script>
-        // Matrix Rain, Liquid Toggle, etc. (same as before)
+        // Matrix Rain
+        (function() {
+            const canvas = document.getElementById('matrixCanvas');
+            const ctx = canvas.getContext('2d');
+            let width, height, drops;
+            const fontSize = 14;
+            const chars = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz$#%&*+=<>/\\|";
+            function init() {
+                width = window.innerWidth;
+                height = window.innerHeight;
+                canvas.width = width;
+                canvas.height = height;
+                drops = Array(Math.floor(width / fontSize)).fill(1);
+            }
+            function draw() {
+                ctx.fillStyle = 'rgba(0,0,0,0.05)';
+                ctx.fillRect(0,0,width,height);
+                ctx.fillStyle = '#00bfff';
+                ctx.font = fontSize + 'px monospace';
+                for (let i = 0; i < drops.length; i++) {
+                    const char = chars[Math.floor(Math.random() * chars.length)];
+                    ctx.fillText(char, i * fontSize, drops[i] * fontSize);
+                    if (drops[i] * fontSize > height && Math.random() > 0.975) drops[i] = 0;
+                    drops[i]++;
+                }
+            }
+            init();
+            setInterval(draw, 50);
+            window.addEventListener('resize', init);
+        })();
 
-        // Main App Logic
+        // Liquid Toggle
+        (function() {
+            const toggleBtn = document.getElementById('liquidToggleBtn');
+            const hiddenCheckbox = document.getElementById('autoFill');
+            
+            gsap.set(toggleBtn, { '--complete': 100, '--hue': 144 });
+            toggleBtn.setAttribute('aria-pressed', 'true');
+            hiddenCheckbox.checked = true;
+
+            const toggleState = () => {
+                const pressed = toggleBtn.getAttribute('aria-pressed') === 'true';
+                const newState = !pressed;
+                toggleBtn.setAttribute('aria-pressed', newState.toString());
+                hiddenCheckbox.checked = newState;
+                gsap.to(toggleBtn, {
+                    '--complete': newState ? 100 : 0,
+                    duration: 0.3,
+                    ease: 'power2.out'
+                });
+            };
+
+            toggleBtn.addEventListener('click', toggleState);
+            toggleBtn.addEventListener('keydown', (e) => {
+                if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    toggleState();
+                }
+            });
+        })();
+
+        // Main App
         const apkFile = document.getElementById('apkFile');
-        // ... (same DOM refs)
+        const fileName = document.getElementById('fileName');
+        const fileButtonText = document.getElementById('fileButtonText');
+        const autoFill = document.getElementById('autoFill');
+        const moduleId = document.getElementById('moduleId');
+        const moduleName = document.getElementById('moduleName');
+        const moduleVersion = document.getElementById('moduleVersion');
+        const moduleVersionCode = document.getElementById('moduleVersionCode');
+        const moduleAuthor = document.getElementById('moduleAuthor');
+        const includeBin = document.getElementById('includeBin');
+        const binSourceContainer = document.getElementById('binSourceContainer');
+        const manualBinContainer = document.getElementById('manualBinContainer');
+        const binZipFile = document.getElementById('binZipFile');
+        const binFileName = document.getElementById('binFileName');
+        const binButtonText = document.getElementById('binButtonText');
+        const generateBtn = document.getElementById('generateBtn');
+        const statusDiv = document.getElementById('status');
+
+        const BIN_URL = 'https://cdn.jsdelivr.net/gh/anemia004/pm-moduler-pro@main/assets/bin.zip';
+
+        if (!moduleAuthor.value) moduleAuthor.value = 'anemia004';
+
+        function updateBinVisibility() {
+            const checked = includeBin.checked;
+            binSourceContainer.style.display = checked ? 'flex' : 'none';
+            const manualSelected = document.querySelector('input[name="binSource"]:checked').value === 'manual';
+            manualBinContainer.style.display = (checked && manualSelected) ? 'block' : 'none';
+        }
+
+        includeBin.addEventListener('change', updateBinVisibility);
+        document.querySelectorAll('input[name="binSource"]').forEach(radio => {
+            radio.addEventListener('change', updateBinVisibility);
+        });
+        updateBinVisibility();
+
+        apkFile.addEventListener('change', async () => {
+            const file = apkFile.files[0];
+            if (!file) return;
+            fileName.textContent = file.name;
+            fileButtonText.textContent = '📎 ' + file.name;
+            if (autoFill.checked) await autoFillFromApk(file);
+        });
+
+        binZipFile.addEventListener('change', () => {
+            const file = binZipFile.files[0];
+            if (file) {
+                binFileName.textContent = file.name;
+                binButtonText.textContent = '📦 ' + file.name;
+            }
+        });
+
+        async function autoFillFromApk(file) {
+            try {
+                if (typeof AppInfoParser === 'undefined') throw new Error('Parser not loaded');
+                const parser = new AppInfoParser(file);
+                const result = await parser.parse();
+                if (!result) throw new Error('Empty result');
+                moduleId.value = (result.package || '').replace(/[^a-zA-Z0-9._-]/g, '_');
+                moduleVersion.value = result.versionName || '';
+                moduleVersionCode.value = result.versionCode ? String(result.versionCode) : '';
+                let appName = result.label || result.application?.label || result.application?.name || result.package?.split('.').pop() || '';
+                moduleName.value = appName;
+                statusDiv.textContent = appName ? '✅ Auto-fill successful' : '⚠️ Could not extract app name';
+                statusDiv.className = appName ? 'status success' : 'status error';
+            } catch(e) {
+                console.error(e);
+                const base = file.name.replace(/\.[^.]+$/, '');
+                moduleId.value = base.replace(/[^a-zA-Z0-9._-]/g, '_');
+                moduleName.value = '';
+                statusDiv.textContent = '❌ Auto-fill failed: ' + e.message;
+                statusDiv.className = 'status error';
+            }
+        }
 
         generateBtn.addEventListener('click', async () => {
-            // ... validation
+            if (!apkFile.files.length) { statusDiv.textContent='❌ Select APK'; statusDiv.className='status error'; return; }
             const id = moduleId.value.trim();
-            // ... get name, version, etc.
+            if (!id) { statusDiv.textContent='❌ Module ID required'; statusDiv.className='status error'; return; }
+            if (typeof fflate === 'undefined') { statusDiv.textContent='❌ fflate missing'; statusDiv.className='status error'; return; }
+
+            const name = moduleName.value.trim() || 'My App';
+            const version = moduleVersion.value.trim() || 'v1.0';
+            const versionCode = moduleVersionCode.value.trim() || '1';
+            const author = moduleAuthor.value.trim() || 'anemia004';
+
+            generateBtn.disabled = true;
+            statusDiv.textContent = '⏳ Building...';
+            statusDiv.className = 'status';
+
             try {
                 const apkData = new Uint8Array(await apkFile.files[0].arrayBuffer());
                 const files = {};
@@ -172,16 +525,13 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
                     files[path] = mode === 0o755 ? [data, { mode: 0o755 }] : data;
                 }
 
-                // Basic Magisk files
                 const meta = 'META-INF/com/google/android/';
-                addText(meta + 'update-binary', '...', 0o755);
+                addText(meta + 'update-binary', `#!/sbin/sh\numask 022\nui_print() { echo "$1"; }\nrequire_new_magisk() { ui_print "*******************************"; ui_print " Please install Magisk v20.4+! "; ui_print "*******************************"; exit 1; }\nOUTFD=$2\nZIPFILE=$3\nmount /data 2>/dev/null\n[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk\n. /data/adb/magisk/util_functions.sh\n[ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk\ninstall_module\nexit 0`, 0o755);
                 addText(meta + 'updater-script', '#MAGISK');
-                addText('module.prop', `...`);
+                addText('module.prop', `id=${id}\nname=${name}\nversion=${version}\nversionCode=${versionCode}\nauthor=${author}\ndescription=Magisk module with APK (overlay/PM install)`);
 
-                // utils.sh
-                addText('utils.sh', `...`);
+                addText('utils.sh', `#!/system/bin/sh\npmex() { if command -v pm >/dev/null 2>&1; then pm "$@"; else cmd package "$@"; fi; }\nget_basepath() { local pkg="$1"; local path=$(pmex path "$pkg" 2>/dev/null | head -1); path=\${path#*:}; [ -n "$path" ] && echo "$path" && return 0; return 20; }\nmount_rv() { local basepath="$1"; [ -f "/data/adb/rvhc/${PKG_NAME}.apk" ] && su -M -c mount -o bind "/data/adb/rvhc/${PKG_NAME}.apk" "$basepath"; }\numount_all() { grep ' /data/app/' /proc/mounts | while read -r line; do mp=\${line#* }; mp=\${mp%% *}; umount -l "\$mp" 2>/dev/null; done; }\nset_perm() { chown $2:$3 "$1"; chmod $4 "$1"; [ -z "$5" ] || chcon "$5" "$1" 2>/dev/null; }\nset_perm_recursive() { find "$1" -type d -exec chmod $5 {} + 2>/dev/null; find "$1" -type f -exec chmod $6 {} + 2>/dev/null; chown -R $2:$3 "$1" 2>/dev/null; [ -z "$7" ] || find "$1" -exec chcon "$7" {} + 2>/dev/null; }`, 0o755);
 
-                // customize.sh - SIMPLIFIED FOR ANY APK
                 addText('customize.sh', `#!/system/bin/sh
 # PM Moduler Pro – customize.sh
 # Adapted from j-hc/revanced-magisk-module (GPL-3.0)
@@ -195,10 +545,8 @@ MODDIR="$MODPATH"
 
 ui_print() { echo "$1"; }
 
-# Set executable permission for bin tools (if included)
 [ -d "$MODPATH/bin" ] && set_perm_recursive "$MODPATH/bin" 0 0 0755 0777
 
-# Determine if package exists and its path
 BASEPATH=""
 if command -v pm >/dev/null 2>&1; then
     BASEPATH=$(pmex path "$PKG_NAME" 2>/dev/null | head -1)
@@ -206,23 +554,18 @@ if command -v pm >/dev/null 2>&1; then
 fi
 
 if [ -n "$BASEPATH" ] && [ "\${BASEPATH:0:7}" = "/system" ]; then
-    # System app – use overlay mount (no PM install)
     ui_print "* System app detected: $PKG_NAME"
     ui_print "* Setting up overlay mount..."
-
-    # Move APK to persistent location
     mkdir -p /data/adb/rvhc
     mv -f "$APK_FILE" "/data/adb/rvhc/$PKG_NAME.apk"
     APK_FILE="/data/adb/rvhc/$PKG_NAME.apk"
 
-    # Create boot-time unmount script to replace original APK
     SCNM="/data/adb/post-fs-data.d/$PKG_NAME-unmount.sh"
     mkdir -p /data/adb/post-fs-data.d
     echo "#!/system/bin/sh" > "$SCNM"
     echo "mount -t tmpfs none '$BASEPATH'" >> "$SCNM"
     chmod 755 "$SCNM"
 
-    # Attempt immediate unmount and bind mount (may fail on read-only)
     umount -l "$BASEPATH" 2>/dev/null
     if su -M -c mount -o bind "$APK_FILE" "$BASEPATH" 2>/dev/null; then
         ui_print "* Mounted successfully. Reboot for persistence."
@@ -231,7 +574,6 @@ if [ -n "$BASEPATH" ] && [ "\${BASEPATH:0:7}" = "/system" ]; then
     fi
     am force-stop "$PKG_NAME"
 else
-    # User app or not installed – use PM install
     ui_print "* Installing $PKG_NAME via PM..."
     pmex install -r "$APK_FILE" 2>&1 | while read line; do ui_print "$line"; done
     if [ $? -ne 0 ]; then
@@ -245,14 +587,11 @@ else
             ui_print "ERROR: Could not create session."
         fi
     fi
-    # Clean up APK after install to save space
     rm -f "$APK_FILE"
 fi
 
-ui_print "* Done."
-`, 0o755);
+ui_print "* Done."`, 0o755);
 
-                // service.sh - for boot-time mount if system app
                 addText('service.sh', `#!/system/bin/sh
 MODDIR="$(dirname "$(readlink -f "$0")")"
 export MODDIR
@@ -260,17 +599,14 @@ PKG_NAME="${id}"
 export PKG_NAME
 . "$MODDIR/utils.sh"
 
-# Only run if system app and APK exists in rvhc
 if [ -f "/data/adb/rvhc/$PKG_NAME.apk" ]; then
     until [ "$(getprop sys.boot_completed)" = 1 ]; do sleep 1; done
     BASEPATH=$(get_basepath "$PKG_NAME")
     if [ -n "$BASEPATH" ] && [ "\${BASEPATH:0:7}" = "/system" ]; then
         mount -o bind "/data/adb/rvhc/$PKG_NAME.apk" "$BASEPATH"
     fi
-fi
-`, 0o755);
+fi`, 0o755);
 
-                // uninstall.sh
                 addText('uninstall.sh', `#!/system/bin/sh
 MODDIR="$(dirname "$(readlink -f "$0")")"
 export MODDIR
@@ -279,18 +615,69 @@ export PKG_NAME
 . "$MODDIR/utils.sh"
 umount_all
 rm -f "/data/adb/rvhc/$PKG_NAME.apk"
-rm -f "/data/adb/post-fs-data.d/$PKG_NAME-unmount.sh"
-`, 0o755);
+rm -f "/data/adb/post-fs-data.d/$PKG_NAME-unmount.sh"`, 0o755);
 
                 files['base.apk'] = apkData;
 
-                // Add bin files if requested (same as before)
-                if (includeBin.checked) { ... }
+                if (includeBin.checked) {
+                    const source = document.querySelector('input[name="binSource"]:checked').value;
+                    let binZipData = null;
+                    if (source === 'manual') {
+                        if (!binZipFile.files.length) {
+                            statusDiv.textContent = '❌ Select bin.zip'; statusDiv.className='status error'; generateBtn.disabled=false; return;
+                        }
+                        binZipData = new Uint8Array(await binZipFile.files[0].arrayBuffer());
+                    } else {
+                        try {
+                            const resp = await fetch(BIN_URL);
+                            if (!resp.ok) throw new Error(`Repo download failed (status ${resp.status})`);
+                            binZipData = new Uint8Array(await resp.arrayBuffer());
+                        } catch(e) {
+                            console.error(e);
+                            statusDiv.textContent = '❌ Auto-download failed: ' + e.message + '. Switch to manual upload.';
+                            statusDiv.className = 'status error'; generateBtn.disabled=false; return;
+                        }
+                    }
+                    const unzipped = fflate.unzipSync(binZipData);
+                    let binFilesAdded = false;
+                    for (const [path, content] of Object.entries(unzipped)) {
+                        const normalized = path.replace(/\\/g, '/');
+                        const parts = normalized.split('/').filter(p => p !== '');
+                        const binIndex = parts.indexOf('bin');
+                        if (binIndex !== -1) {
+                            const relativeParts = parts.slice(binIndex + 1);
+                            if (relativeParts.length > 0) {
+                                files['bin/' + relativeParts.join('/')] = content;
+                                binFilesAdded = true;
+                            }
+                        } else {
+                            files['bin/' + normalized] = content;
+                            binFilesAdded = true;
+                        }
+                    }
+                    if (!binFilesAdded) throw new Error('No files found in downloaded zip');
+                }
 
-                // ZIP and download
                 const zipped = fflate.zipSync(files, { level: 9 });
-                // ...
-            } catch (e) { ... }
+                const blob = new Blob([zipped], { type: 'application/zip' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `${id}.zip`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+
+                statusDiv.textContent = '✅ Module ZIP generated!';
+                statusDiv.className = 'status success';
+            } catch(e) {
+                console.error(e);
+                statusDiv.textContent = '❌ Error: ' + e.message;
+                statusDiv.className = 'status error';
+            } finally {
+                generateBtn.disabled = false;
+            }
         });
     </script>
 </body>

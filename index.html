@@ -798,6 +798,7 @@ get_basepath() {
     local pkg="$1"
     local path=$(pmex path "$pkg" 2>/dev/null | head -1)
     path=\${path#*:}
+    path=\${path%/*}
     [ -n "$path" ] && echo "$path" && return 0
     return 20
 }

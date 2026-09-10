@@ -792,25 +792,27 @@ PKG_VER="${version}"
 RVPATH="/data/adb/rvhc/${id}.apk"
 export PKG_NAME PKG_VER RVPATH
 
-pmex() { if command -v pm >/dev/null 2>&1; then pm "$@" 2>&1 </dev/null; else cmd package "$@" 2>&1 </dev/null; fi; }
+pmex() {
+    OP=$(pm "$@" 2>&1 </dev/null)
+    RET=$?
+    echo "$OP"
+    return $RET
+}
 
 get_basepath() {
-    local pkg="$1"
-    local path=$(pmex path "$pkg" 2>/dev/null | head -1)
-    path=\${path#*:}
-    path=\${path%/*}
-    [ -n "$path" ] && echo "$path" && return 0
-    return 20
+    BASEPATH=$(pmex path "$PKG_NAME")
+    SVCL=$?
+    BASEPATH=\${BASEPATH##*:} BASEPATH=\${BASEPATH%/*}
+    echo "$BASEPATH"
+    return $SVCL
 }
 
 get_app_version() {
-    local pkg="$1"
-    dumpsys package "$pkg" 2>/dev/null | grep -m1 versionName | sed 's/.*versionName=//'
+    dumpsys package "$PKG_NAME" 2>/dev/null | grep -m1 versionName | sed 's/.*versionName=//'
 }
 
 mount_rv() {
-    local basepath="$1"
-    [ -f "$RVPATH" ] && su -M -c mount -o bind "$RVPATH" "$basepath/base.apk"
+    [ -f "$RVPATH" ] && su -M -c mount -o bind "$RVPATH" "$1/base.apk"
 }
 
 umount_all() {
@@ -867,7 +869,7 @@ else
 fi
 
 INS=true
-if BASEPATH=$(get_basepath "$PKG_NAME"); then
+if BASEPATH=$(get_basepath); then
     if [ "\${BASEPATH:1:4}" != data ]; then
         ui_print "* Detected $PKG_NAME as a system app"
         SCNM="/data/adb/post-fs-data.d/$PKG_NAME-uninstall.sh"
@@ -879,7 +881,7 @@ if BASEPATH=$(get_basepath "$PKG_NAME"); then
         abort
     fi
 
-    VERSION=$(get_app_version "$PKG_NAME")
+    VERSION=$(get_app_version)
     if [ "$VERSION" ] && [ "$VERSION" = "$PKG_VER" ]; then
         ui_print "* $PKG_NAME is up-to-date ($VERSION)"
         INS=false
@@ -929,16 +931,12 @@ install() {
                 else
                     ui_print "* Uninstalling..."
                 fi
-                
-                # Global uninstall to destroy persistent signatures across all profiles
-                pmex uninstall $ex_unins_arg "$PKG_NAME" >/dev/null 2>&1
-                
-                # Fallback to user 0 just in case
-                pmex uninstall --user 0 $ex_unins_arg "$PKG_NAME" >/dev/null 2>&1
-                
-                if [ $IT = 2 ]; then
-                    install_err="ERROR: Cannot resolve signature mismatch. Please uninstall the app manually and flash again."
-                    break
+                if ! op=$(pmex uninstall --user 0 $ex_unins_arg "$PKG_NAME"); then
+                    ui_print "$op"
+                    if [ $IT = 2 ]; then
+                        install_err="ERROR: pm uninstall failed."
+                        break
+                    fi
                 fi
                 continue
             fi
@@ -946,7 +944,7 @@ install() {
             install_err="$op"
             break
         fi
-        if BASEPATH=$(get_basepath "$PKG_NAME"); then
+        if BASEPATH=$(get_basepath); then
             :
         else
             install_err=" "
@@ -1021,7 +1019,7 @@ run() {
     until [ -d "/sdcard/Android" ]; do sleep 1; done
 
     while
-        BASEPATH=$(get_basepath "$PKG_NAME")
+        BASEPATH=$(get_basepath)
         SVCL=$?
         [ $SVCL = 20 ]
     do sleep 2; done

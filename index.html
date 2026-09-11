@@ -82,9 +82,21 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
             font-size:2.2rem;
             color:#fff;
             text-shadow: 0 0 10px rgba(0,191,255,0.8), 0 0 20px rgba(0,191,255,0.4);
-            margin-bottom:0.5rem;
+            margin-bottom:0.2rem;
             letter-spacing:0.05em;
             font-weight:800;
+        }
+
+        .scope-notice {
+            font-size: 0.8rem;
+            text-align: center;
+            color: rgba(0, 191, 255, 0.85);
+            background: rgba(0, 191, 255, 0.08);
+            border: 1px solid rgba(0, 191, 255, 0.25);
+            padding: 0.5rem 0.8rem;
+            border-radius: 0.8rem;
+            margin-bottom: 0.5rem;
+            line-height: 1.3;
         }
 
         .field label.title {
@@ -361,7 +373,7 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
             }
         }
 
-        /* ===== LIQUID TOGGLE CSS (unchanged) ===== */
+        /* ===== LIQUID TOGGLE CSS ===== */
         :root { --transition: 0.2s; --ease: ease-out; }
         [data-pressed=true] .liquid__track { min-height: 30px; }
         [data-bounce='true']:has(:is(button:active, [data-pressed="true"])) { --transition: 0.6s; --ease: linear(0 0%, 0.6091 3.69%, 1.0259 7.24%, 1.1733 9.05%, 1.283 10.92%, 1.3562 12.87%, 1.3948 14.95%, 1.4014 16.03%, 1.3999 17.16%, 1.3731 19.64%, 1.3202 22.27%, 1.1394 29.39%, 1.0582 33.17%, 0.9943 37.45%, 0.9734 39.64%, 0.9593 41.92%, 0.9505 45.08%, 0.9517 48.7%, 0.9924 63.02%, 1.0046 71.2%, 1.0061 78.24%, 1 100%); }
@@ -421,6 +433,9 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
     <div class="glass-wrapper">
         <div class="form-container">
             <h2>PM Moduler Pro</h2>
+            <div class="scope-notice">
+                ⚠️ Targets single-APK user apps. System apps must be installed as user apps (/data) first.
+            </div>
 
             <!-- APK File -->
             <div class="field">
@@ -432,7 +447,7 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
                 <div class="file-name" id="fileName">No file selected</div>
             </div>
 
-            <!-- Auto-fill with the NEW Liquid Toggle -->
+            <!-- Auto-fill with Liquid Toggle -->
             <div class="toggle-wrapper">
                 <div class="liquid-container">
                     <div style="position: absolute; top: 0; left: 0; transform: scale(0.4285); transform-origin: top left;">
@@ -783,7 +798,7 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
                 const meta = 'META-INF/com/google/android/';
                 addText(meta + 'update-binary', `#!/sbin/sh\numask 022\nui_print() { echo "$1"; }\nrequire_new_magisk() {\n  ui_print "*******************************"\n  ui_print " Please install Magisk v20.4+! "\n  ui_print "*******************************"\n  exit 1\n}\nOUTFD=$2\nZIPFILE=$3\nmount /data 2>/dev/null\n[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk\n. /data/adb/magisk/util_functions.sh\n[ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk\ninstall_module\nexit 0`, 0o755);
                 addText(meta + 'updater-script', '#MAGISK');
-                addText('module.prop', `id=${id}\nname=${name}\nversion=${version}\nversionCode=${versionCode}\nauthor=${author}\ndescription=Magisk module with APK (overlay/PM install)`);
+                addText('module.prop', `id=${id}\nname=${name}\nversion=${version}\nversionCode=${versionCode}\nauthor=${author}\ndescription=Magisk module with APK (overlay/bind mount)`);
 
                 // ===== utils.sh =====
                 addText('utils.sh', `#!/system/bin/sh
@@ -805,10 +820,6 @@ get_basepath() {
     BASEPATH=\${BASEPATH##*:} BASEPATH=\${BASEPATH%/*}
     echo "$BASEPATH"
     return $SVCL
-}
-
-get_app_version() {
-    dumpsys package "$PKG_NAME" 2>/dev/null | grep -m1 versionName | sed 's/.*versionName=//'
 }
 
 mount_rv() {
@@ -841,7 +852,7 @@ set_perm_recursive() {
                 // ===== customize.sh =====
                 addText('customize.sh', `#!/system/bin/sh
 # PM Moduler Pro – customize.sh
-# Derived from j-hc/revanced-magisk-module (GPL-3.0)
+# Pure bind-mount overlay (no PMS install)
 MODPATH=\${MODPATH:-/data/adb/modules/${id}}
 export MODPATH
 MODDIR="$MODPATH"
@@ -852,14 +863,18 @@ ui_print() { echo "$1"; }
 if [ -n "$MODULE_ARCH" ] && [ "$MODULE_ARCH" != "$ARCH" ]; then
     abort "ERROR: Wrong arch"
 fi
-if [ "$ARCH" = "arm" ]; then ARCH_LIB=armeabi-v7a; elif [ "$ARCH" = "arm64" ]; then ARCH_LIB=arm64-v8a; elif [ "$ARCH" = "x86" ]; then ARCH_LIB=x86; elif [ "$ARCH" = "x64" ]; then ARCH_LIB=x86_64; else ARCH_LIB=arm64-v8a; fi
+if [ "$ARCH" = "arm" ]; then ARCH_LIB=armeabi-v7a;
+elif [ "$ARCH" = "arm64" ]; then ARCH_LIB=arm64-v8a;
+elif [ "$ARCH" = "x86" ]; then ARCH_LIB=x86;
+elif [ "$ARCH" = "x64" ]; then ARCH_LIB=x86_64;
+else ARCH_LIB=arm64-v8a; fi
 
-set_perm_recursive "$MODPATH/bin" 0 0 0755 0777
 umount_all
 
-# Detect if system app
+# Remove Play Store updates so we bind over the base system APK if present
 if OP=$(dumpsys package "$PKG_NAME") && [ "$OP" ]; then
     if echo "$OP" | grep -m1 pkgFlags | grep -Fq UPDATED_SYSTEM_APP; then
+        ui_print "* Removing Play Store updates..."
         pmex uninstall-system-updates "$PKG_NAME" >/dev/null 2>&1
     fi
 else
@@ -868,130 +883,52 @@ else
     fi
 fi
 
-INS=true
-if BASEPATH=$(get_basepath); then
-    if [ "\${BASEPATH:1:4}" != data ]; then
-        ui_print "* Detected $PKG_NAME as a system app"
-        SCNM="/data/adb/post-fs-data.d/$PKG_NAME-uninstall.sh"
-        mkdir -p /data/adb/post-fs-data.d
-        echo "mount -t tmpfs none $BASEPATH" >"$SCNM"
-        chmod +x "$SCNM"
-        ui_print "* Created the uninstall script."
-        ui_print "* Reboot and reflash the module!"
-        abort
-    fi
-
-    VERSION=$(get_app_version)
-    if [ "$VERSION" ] && [ "$VERSION" = "$PKG_VER" ]; then
-        ui_print "* $PKG_NAME is up-to-date ($VERSION)"
-        INS=false
-    elif [ ! -f "$MODPATH/stock/base.apk" ]; then
-        ui_print "ERROR: Version mismatch"
-        abort
-    fi
+# Resolve base path — abort if not installed
+if ! BASEPATH=$(get_basepath); then
+    abort "ERROR: Target app is not installed. Please install the original app first!"
 fi
 
-install() {
-    if [ ! -f "$MODPATH/stock/base.apk" ]; then
-        abort "ERROR: Stock $PKG_NAME apk was not found"
-    fi
-    install_err=""
-    VERIF1=$(settings get global verifier_verify_adb_installs)
-    VERIF2=$(settings get global package_verifier_enable)
-    settings put global verifier_verify_adb_installs 0
-    settings put global package_verifier_enable 0
-
-    SZ=$(stat -c "%s" "$MODPATH"/stock/*.apk | awk '{sum += $0} END {print sum}')
-    for IT in 1 2; do
-        ui_print "* Updating $PKG_NAME to $PKG_VER"
-        if ! SES=$(pmex install-create --user 0 -i com.android.vending -r -S "$SZ"); then
-            ui_print "ERROR: install-create failed"
-            install_err="$SES"
-            break
-        fi
-        SES=\${SES#*[} SES=\${SES%]*}
-
-        for apki in "$MODPATH/stock"/*.apk; do
-            set_perm "\${apki}" 1000 1000 644 u:object_r:apk_data_file:s0
-            if ! op=$(pmex install-write -S "$SZ" "$SES" "$(basename "\${apki}")" "\${apki}"); then
-                ui_print "ERROR: install-write failed"
-                install_err="$op"
-                break
-            fi
-        done
-        [ "$install_err" ] && break
-
-        if ! op=$(pmex install-commit "$SES"); then
-            ui_print "$op"
-            if echo "$op" | grep -q -e INSTALL_FAILED_VERSION_DOWNGRADE -e INSTALL_FAILED_UPDATE_INCOMPATIBLE -e INSTALL_FAILED_DUPLICATE; then
-                ex_unins_arg=""
-                if echo "$op" | grep -q INSTALL_FAILED_DUPLICATE; then
-                    ui_print "* Uninstalling without data loss..."
-                    ex_unins_arg="-k"
-                else
-                    ui_print "* Uninstalling..."
-                fi
-                if ! op=$(pmex uninstall --user 0 $ex_unins_arg "$PKG_NAME"); then
-                    ui_print "$op"
-                    if [ $IT = 2 ]; then
-                        install_err="ERROR: pm uninstall failed."
-                        break
-                    fi
-                fi
-                continue
-            fi
-            ui_print "ERROR: install-commit failed"
-            install_err="$op"
-            break
-        fi
-        if BASEPATH=$(get_basepath); then
-            :
-        else
-            install_err=" "
-            break
-        fi
-        break
-    done
-    settings put global verifier_verify_adb_installs "$VERIF1"
-    settings put global package_verifier_enable "$VERIF2"
-    [ "$install_err" ] && abort "$install_err"
-}
-
-if [ $INS = true ] && ! install; then abort; fi
-
-BASEPATHLIB=\${BASEPATH}/lib/\${ARCH}
-if [ $INS = true ] || [ -z "$(ls -A1 "\$BASEPATHLIB")" ]; then
-    ui_print "* Extracting native libs"
-    mkdir -p "\$BASEPATHLIB"
-    rm -f "\$BASEPATHLIB"/* >/dev/null 2>&1 || :
-    if op=$(unzip -o -j "$MODPATH/base.apk" "lib/\${ARCH_LIB}/*" -d "\$BASEPATHLIB" 2>&1); then
-        set_perm_recursive "\${BASEPATH}/lib" 1000 1000 755 755 u:object_r:apk_data_file:s0
-    else
-        echo >&2 "ERROR: extracting native libs failed: '$op'"
-    fi
+# System app check — fail-safe for v1
+if [ "\${BASEPATH:1:4}" != "data" ]; then
+    abort "ERROR: $PKG_NAME is a system app. Pure overlay requires the target app to be installed in /data. Please convert or install it as a user app first!"
 fi
 
+# Extract native libs directly (preserves unmatched existing libraries)
+BASEPATHLIB="\${BASEPATH}/lib/\${ARCH}"
+ui_print "* Extracting native libs"
+mkdir -p "$BASEPATHLIB"
+if op=$(unzip -o -j "$MODPATH/base.apk" "lib/\${ARCH_LIB}/*" -d "$BASEPATHLIB" 2>&1); then
+    set_perm_recursive "\${BASEPATH}/lib" 1000 1000 755 755 u:object_r:apk_data_file:s0
+else
+    ui_print "- No native libs found (non-fatal)"
+fi
+
+# Stage modded APK
 set_perm "$MODPATH/base.apk" 1000 1000 644 u:object_r:apk_data_file:s0
-
-ui_print "* Mounting $PKG_NAME"
 mkdir -p "/data/adb/rvhc"
 mv -f "$MODPATH/base.apk" "$RVPATH"
 
-if ! op=$(su -M -c mount -o bind "$RVPATH" "\$BASEPATH/base.apk" 2>&1); then
-    ui_print "ERROR: Mount failed!"
-    ui_print "$op"
+# Bind mount over target base.apk
+ui_print "* Mounting $PKG_NAME"
+if ! op=$(su -M -c mount -o bind "$RVPATH" "$BASEPATH/base.apk" 2>&1); then
+    if ! op=$(su -c mount -o bind "$RVPATH" "$BASEPATH/base.apk" 2>&1); then
+        ui_print "ERROR: Mount failed!"
+        ui_print "$op"
+        abort
+    fi
 fi
 am force-stop "$PKG_NAME"
 
 ui_print "* Optimizing $PKG_NAME"
 cmd package compile -m speed-profile -f "$PKG_NAME" >/dev/null 2>&1
 
-if [ "$KSU" ]; then
+# Guarded KernelSU profile check
+if [ "$KSU" ] && [ -f "\${MODPATH}/bin/\$ARCH/ksu_profile" ]; then
     DUMPSYS=$(dumpsys package "$PKG_NAME" 2>&1)
     UID=\${DUMPSYS#*uid=} UID=\${UID%% *}
     [ -z "$UID" ] && UID=\${DUMPSYS#*userId=} UID=\${UID%% *}
     if [ "$UID" ]; then
-        if ! OP=$("\${MODPATH:?}/bin/\$ARCH/ksu_profile" "$UID" "$PKG_NAME" 2>&1); then
+        if ! OP=$("\${MODPATH}/bin/\$ARCH/ksu_profile" "$UID" "$PKG_NAME" 2>&1); then
             ui_print "  $OP"
             ui_print "  * In your root manager app,"
             ui_print "    disable 'Unmount modules' for $PKG_NAME"
@@ -1001,11 +938,10 @@ if [ "$KSU" ]; then
     fi
 fi
 
-rm -rf "\${MODPATH:?}/bin" "$MODPATH/stock/"
+rm -rf "\${MODPATH:?}/bin"
 cp -f "$MODPATH/module.prop" "$MODPATH/module.prop.orig"
 
 ui_print "* Done. No need to reboot."
-ui_print "  by j-hc (github.com/j-hc)"
 ui_print " "`, 0o755);
 
                 // ===== service.sh =====
@@ -1044,12 +980,10 @@ export MODDIR
 . "$MODDIR/utils.sh"
 
 umount_all
-rm -f "$RVPATH"
-rm -f "/data/adb/post-fs-data.d/$PKG_NAME-uninstall.sh"`, 0o755);
+rm -f "$RVPATH"`, 0o755);
 
-                // FIX: Add base.apk to root AND to stock/ directory
+                // Base APK only (stock/ removed)
                 files['base.apk'] = apkData;
-                files['stock/base.apk'] = apkData;
 
                 if (includeBin.checked) {
                     const source = document.querySelector('input[name="binSource"]:checked').value;

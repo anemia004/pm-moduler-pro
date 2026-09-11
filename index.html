@@ -1,5 +1,5 @@
 <!--
-PM Moduler Pro
+Overlay Forge
 Copyright (C) 2025 anemia004
 Derived from j-hc/revanced-magisk-module (GPL-3.0)
 This program is free software: you can redistribute it and/or modify
@@ -14,7 +14,7 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="theme-color" content="#000000">
-    <title>PM Moduler Pro</title>
+    <title>Overlay Forge</title>
     <!-- Local libraries (must be in same folder) -->
     <script src="fflate.min.js"></script>
     <script src="app-info-parser.min.js"></script>
@@ -87,17 +87,63 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
             font-weight:800;
         }
 
-        .scope-notice {
-            font-size: 0.8rem;
+        .tagline {
             text-align: center;
-            color: rgba(0, 191, 255, 0.85);
-            background: rgba(0, 191, 255, 0.08);
-            border: 1px solid rgba(0, 191, 255, 0.25);
-            padding: 0.5rem 0.8rem;
-            border-radius: 0.8rem;
-            margin-bottom: 0.5rem;
-            line-height: 1.3;
+            font-size: 0.8rem;
+            letter-spacing: 0.1em;
+            color: rgba(0, 191, 255, 0.7);
+            text-transform: uppercase;
+            margin-bottom: 0.4rem;
         }
+
+        /* ===== LIMITATIONS PANEL ===== */
+        .limits-panel {
+            background: rgba(255, 170, 0, 0.06);
+            border: 1px solid rgba(255, 170, 0, 0.3);
+            border-radius: 1rem;
+            padding: 0.9rem 1rem;
+            font-size: 0.82rem;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.45;
+            margin-bottom: 0.3rem;
+        }
+        .limits-panel summary {
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: #ffaa00;
+            text-shadow: 0 0 8px rgba(255,170,0,0.4);
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            user-select: none;
+        }
+        .limits-panel summary::-webkit-details-marker { display: none; }
+        .limits-panel summary::before {
+            content: "⚠️";
+            font-size: 1rem;
+        }
+        .limits-panel[open] summary::before { content: "📖"; }
+        .limits-panel[open] summary { margin-bottom: 0.7rem; }
+        .limits-panel ul {
+            padding-left: 1.2rem;
+            margin: 0;
+        }
+        .limits-panel li {
+            margin-bottom: 0.4rem;
+        }
+        .limits-panel code {
+            background: rgba(0,0,0,0.4);
+            padding: 0.1rem 0.35rem;
+            border-radius: 0.3rem;
+            font-family: 'Consolas', monospace;
+            font-size: 0.78rem;
+            color: #00bfff;
+        }
+        .limits-panel strong { color: #ffcc66; }
 
         .field label.title {
             display:block;
@@ -432,10 +478,23 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
 
     <div class="glass-wrapper">
         <div class="form-container">
-            <h2>PM Moduler Pro</h2>
-            <div class="scope-notice">
-                ⚠️ Targets single-APK user apps. System apps must be installed as user apps (/data) first.
-            </div>
+            <h2>Overlay Forge</h2>
+            <div class="tagline">Systemless APK overlays for Magisk, KernelSU &amp; APatch</div>
+
+            <!-- Limitations Panel -->
+            <details class="limits-panel">
+                <summary>Read before building</summary>
+                <ul>
+                    <li><strong>User apps only.</strong> The target must be installed to <code>/data/app/</code>, not <code>/system/</code>. If it's a pure system app, install it from a store first so it gets a <code>/data</code> overlay.</li>
+                    <li><strong>Single-APK only.</strong> Split APKs (App Bundles) are not supported. Only <code>base.apk</code> will be mounted; other splits stay original and may crash the app.</li>
+                    <li><strong>Version rule.</strong> The uploaded APK must have a <em>version code ≥</em> the version currently installed. Older mods will crash on launch due to data schema mismatches.</li>
+                    <li><strong>Data is not sandboxed.</strong> The modded app writes to the same <code>/data/data/&lt;pkg&gt;/</code> directory as the original. After removing the module, the original app may crash on the future-dated schema.</li>
+                    <li><strong>Uninstall recovery.</strong> If the app crashes after removing this module, run <code>su -c "pm clear &lt;pkg&gt;"</code> in a root shell, then reinstall from the original source.</li>
+                    <li><strong>Store updates break the mount.</strong> If you update the app from F-Droid/Play Store, the mount may become stale. Reboot to let <code>service.sh</code> re-resolve the path, or re-flash the module.</li>
+                    <li><strong>Version display stays original.</strong> System Settings and app stores will show the original version — this is expected and correct. The modded code runs, but PMS keeps its original record.</li>
+                    <li><strong>Root required.</strong> Magisk v20.4+, KernelSU, or APatch. Play Integrity's <em>device</em> verdict still fails on rooted devices unless separately spoofed — <em>app</em> integrity is preserved.</li>
+                </ul>
+            </details>
 
             <!-- APK File -->
             <div class="field">
@@ -677,7 +736,7 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
         const statusDiv = document.getElementById('status');
 
         // Constants
-        const BIN_URL = 'https://cdn.jsdelivr.net/gh/anemia004/pm-moduler-pro@main/assets/bin.zip';
+        const BIN_URL = 'https://cdn.jsdelivr.net/gh/anemia004/overlay-forge@main/assets/bin.zip';
 
         // Default author
         if (!moduleAuthor.value) moduleAuthor.value = 'anemia004';
@@ -798,7 +857,7 @@ Full license: https://www.gnu.org/licenses/gpl-3.0.txt
                 const meta = 'META-INF/com/google/android/';
                 addText(meta + 'update-binary', `#!/sbin/sh\numask 022\nui_print() { echo "$1"; }\nrequire_new_magisk() {\n  ui_print "*******************************"\n  ui_print " Please install Magisk v20.4+! "\n  ui_print "*******************************"\n  exit 1\n}\nOUTFD=$2\nZIPFILE=$3\nmount /data 2>/dev/null\n[ -f /data/adb/magisk/util_functions.sh ] || require_new_magisk\n. /data/adb/magisk/util_functions.sh\n[ $MAGISK_VER_CODE -lt 20400 ] && require_new_magisk\ninstall_module\nexit 0`, 0o755);
                 addText(meta + 'updater-script', '#MAGISK');
-                addText('module.prop', `id=${id}\nname=${name}\nversion=${version}\nversionCode=${versionCode}\nauthor=${author}\ndescription=Magisk module with APK (overlay/bind mount)`);
+                addText('module.prop', `id=${id}\nname=${name}\nversion=${version}\nversionCode=${versionCode}\nauthor=${author}\ndescription=Systemless bind-mount overlay for ${name} (Overlay Forge)`);
 
                 // ===== utils.sh =====
                 addText('utils.sh', `#!/system/bin/sh
@@ -851,7 +910,7 @@ set_perm_recursive() {
 
                 // ===== customize.sh =====
                 addText('customize.sh', `#!/system/bin/sh
-# PM Moduler Pro – customize.sh
+# Overlay Forge – customize.sh
 # Pure bind-mount overlay (no PMS install)
 MODPATH=\${MODPATH:-/data/adb/modules/${id}}
 export MODPATH
@@ -890,7 +949,7 @@ fi
 
 # System app check — fail-safe for v1
 if [ "\${BASEPATH:1:4}" != "data" ]; then
-    abort "ERROR: $PKG_NAME is a system app. Pure overlay requires the target app to be installed in /data. Please convert or install it as a user app first!"
+    abort "ERROR: $PKG_NAME is a system app. Overlay Forge requires the target app to be installed in /data. Please install it from a store first so it gets a /data overlay!"
 fi
 
 # Extract native libs directly (preserves unmatched existing libraries)
@@ -980,7 +1039,20 @@ export MODDIR
 . "$MODDIR/utils.sh"
 
 umount_all
-rm -f "$RVPATH"`, 0o755);
+rm -f "$RVPATH"
+
+ui_print " "
+ui_print "*** Overlay Forge ***"
+ui_print "Module removed."
+ui_print " "
+ui_print "If the original app crashes on next launch,"
+ui_print "the modded version wrote incompatible data."
+ui_print " "
+ui_print "Fix in a root shell:"
+ui_print "  su -c \\"pm clear $PKG_NAME\\""
+ui_print " "
+ui_print "Then reinstall the app from its original source."
+ui_print " "`, 0o755);
 
                 // Base APK only (stock/ removed)
                 files['base.apk'] = apkData;

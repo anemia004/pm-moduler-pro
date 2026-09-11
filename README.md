@@ -45,7 +45,7 @@ signature and version — so signature checks pass and app integrity is preserve
   the new path, or re-flash the module.
 - **Play Integrity device verdict still fails** on rooted devices — this is
   unrelated to the module and needs a separate spoofing solution.
-- **Android 7.1 is untested**; use a modern device for reliable results.
+
 
 ---
 
